@@ -18,7 +18,19 @@ reorganizáveis. Nada de minimalismo.
 O projeto se chamava **DocForge Ultimate** até a versão 0.5.0. Os registros
 históricos em `docs/decisions` e `docs/test_report.md` mantêm o nome antigo.
 
-## Executar no Windows
+## Instalar no Windows
+
+Baixe `OldSchoolPDF-<versão>-setup.exe` e execute. O instalador:
+
+- instala só para o seu usuário, sem pedir administrador (ou para todos, se preferir);
+- cria atalhos no menu Iniciar e, se você quiser, na área de trabalho;
+- pode colocar o Old School PDF em **Abrir com** para arquivos `.pdf`, sem trocar o seu leitor padrão;
+- vem com tudo incluído, até a assinatura digital. Não precisa de Python nem de internet.
+
+A desinstalação fica em **Configurações > Aplicativos** e remove programa, atalhos e
+associações. As preferências ficam em `%LOCALAPPDATA%\Old School PDF`.
+
+## Executar a partir do código-fonte
 
 Requer Windows x64 e Python >=3.12,<3.15. O ambiente de teste foi Windows 11
 com Python 3.13.15. A instalação inclui o motor PyMuPDF 2.1. Consulte o
@@ -131,7 +143,22 @@ uv run --no-sync python -m build --no-isolation
 normal: `Remove-Item Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue`.
 Os testes usam arquivos temporários, não as preferências reais. A CI configura
 Windows e Python 3.12/3.13/3.14; execução na CI só é comprovada após subir o projeto
-e observar o resultado. Linux, Windows 10 e instaladores ainda não foram validados.
+e observar o resultado. Linux e Windows 10 ainda não foram validados.
+
+### Gerar o executável e o instalador
+
+Requer o [Inno Setup 6](https://jrsoftware.org/isinfo.php) para a última etapa
+(`winget install JRSoftware.InnoSetup`).
+
+```powershell
+uv sync --frozen --extra signing
+uv run --no-sync python packaging/build.py
+```
+
+O script gera o ícone e as imagens do assistente a partir do logo, monta o
+executável com PyInstaller em `dist/pyinstaller/OldSchoolPDF`, testa a abertura
+do programa e o leitor de PDF empacotado e cria `dist/OldSchoolPDF-<versão>-setup.exe`.
+Use `--sem-instalador` para parar no executável.
 
 ## Estrutura e documentação
 
@@ -139,6 +166,7 @@ e observar o resultado. Linux, Windows 10 e instaladores ainda não foram valida
 - `src/oldschoolpdf/application`: contratos e serviços, sem widgets.
 - `src/oldschoolpdf/infrastructure`: QSettings, inspeção local e processos PDF.
 - `src/oldschoolpdf/ui`: janela, painéis, diálogos, tema e ícones SVG próprios.
+- `packaging/`: lançador, especificação do PyInstaller, script do instalador e build.
 - [Conceitos visuais](docs/concepts/README.md) que deram origem ao tema Clássico 2000.
 - [Arquitetura](docs/architecture.md), [decisões do M5](docs/decisions/0005-m5-security.md),
   [plano de teste](docs/test_plan.md), [relatório real](docs/test_report.md),

@@ -1,0 +1,15 @@
+﻿Old School PDF
+
+Um editor de PDF que é seu de verdade.
+
+- Grátis para sempre. Sem assinatura, sem versão "Pro", sem cadastro.
+- Tudo acontece no seu computador. Nenhum arquivo é enviado para a internet.
+- Software livre sob a licença AGPL-3.0: você pode usar, estudar, modificar
+  e compartilhar.
+
+O instalador vai copiar o programa para a pasta escolhida e criar atalhos no
+menu Iniciar. Suas preferências ficam em %LOCALAPPDATA%\Old School PDF e não
+são apagadas ao desinstalar.
+
+Para o OCR (reconhecimento de texto em digitalizações), indique depois a pasta
+com os modelos de idioma em OCR > Configurar OCR local.

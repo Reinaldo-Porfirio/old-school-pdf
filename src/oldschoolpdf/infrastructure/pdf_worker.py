@@ -8,6 +8,8 @@ from oldschoolpdf.domain.errors import OldSchoolPDFError
 from oldschoolpdf.domain.viewer import MAX_REPLY_HEADER
 
 FRAME = struct.Struct("!II")
+# Argumento que transforma o executável empacotado no processo leitor.
+WORKER_FLAG = "--pdf-worker"
 
 
 def main() -> None:

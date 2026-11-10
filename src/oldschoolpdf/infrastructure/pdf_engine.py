@@ -3,6 +3,7 @@
 import math
 from bisect import bisect_right
 from collections.abc import Callable
+from contextlib import suppress
 from pathlib import Path
 from unicodedata import normalize
 
@@ -52,7 +53,9 @@ def _fold(text: str) -> str:
 
 class PdfEngine:
     def __init__(self) -> None:
-        pymupdf.use_layout(False)
+        # Sem o módulo opcional de layout (caso do executável), ele já está desligado.
+        with suppress(NotImplementedError):
+            pymupdf.use_layout(False)
         pymupdf.TOOLS.mupdf_display_errors(False)
         pymupdf.TOOLS.mupdf_display_warnings(False)
         self.document: pymupdf.Document | None = None

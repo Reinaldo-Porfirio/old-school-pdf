@@ -6,7 +6,15 @@ import sys
 from PySide6.QtCore import QObject, QProcess, QTimer, Signal
 
 from oldschoolpdf.domain.viewer import MAX_RASTER_BYTES, MAX_REPLY_HEADER
-from oldschoolpdf.infrastructure.pdf_worker import FRAME
+from oldschoolpdf.infrastructure.pdf_worker import FRAME, WORKER_FLAG
+
+
+def worker_command() -> tuple[str, list[str]]:
+    """Programa e argumentos do processo leitor, no código-fonte ou no executável."""
+    if getattr(sys, "frozen", False):
+        # No .exe não há interpretador separado: o próprio executável vira o leitor.
+        return sys.executable, [WORKER_FLAG]
+    return sys.executable, ["-I", "-u", "-m", "oldschoolpdf.infrastructure.pdf_worker"]
 
 
 class PdfProcess(QObject):
@@ -19,8 +27,9 @@ class PdfProcess(QObject):
     def __init__(self, parent: QObject) -> None:
         super().__init__(parent)
         self.process = QProcess(self)
-        self.process.setProgram(sys.executable)
-        self.process.setArguments(["-I", "-u", "-m", "oldschoolpdf.infrastructure.pdf_worker"])
+        program, arguments = worker_command()
+        self.process.setProgram(program)
+        self.process.setArguments(arguments)
         self.process.started.connect(self._write)
         self.process.readyReadStandardOutput.connect(self._read)
         self.process.readyReadStandardError.connect(self.process.readAllStandardError)

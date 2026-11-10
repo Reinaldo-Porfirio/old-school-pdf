@@ -2,7 +2,7 @@
 
 from html import escape
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -146,10 +146,6 @@ class HomePage(QScrollArea):
         titles.addWidget(subtitle)
         banner_layout.addLayout(titles, 1)
         layout.addWidget(banner)
-        badge = QLabel(self.tr("GRÁTIS PARA SEMPRE  ·  SEM ASSINATURA  ·  100% LOCAL"))
-        badge.setProperty("role", "badge")
-        badge.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(badge, 0, Qt.AlignmentFlag.AlignLeft)
         intro = QLabel(
             self.tr(
                 "Leia, organize e edite PDFs locais. Proteja cópias com senha, revise áreas "
@@ -185,8 +181,8 @@ class HomePage(QScrollArea):
             ("M3", "Anotações e formulários", "Concluído"),
             ("M4", "OCR, conversão e lotes", "Concluído"),
             ("M5", "Segurança e assinaturas locais", "Concluído"),
-            ("M6", "Visual Clássico 2000 e novo nome", "Versão atual"),
-            ("M7", "Instalador e distribuição", "Futuro"),
+            ("M6", "Visual Clássico 2000, novo nome e instalador", "Versão atual"),
+            ("M7", "Publicação e atualizações", "Futuro"),
         ):
             QTreeWidgetItem(roadmap, row)
         roadmap.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)

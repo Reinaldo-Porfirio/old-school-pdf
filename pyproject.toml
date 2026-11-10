@@ -26,13 +26,14 @@ dev = [
   "ruff==0.17.3",
   "build==1.6.1",
   "hatchling==1.33.0",
+  "pyinstaller==6.22.3",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/oldschoolpdf"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "docs", "scripts", "pyproject.toml", "uv.lock", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md", ".github"]
+include = ["src", "tests", "docs", "scripts", "packaging", "pyproject.toml", "uv.lock", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md", ".github"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

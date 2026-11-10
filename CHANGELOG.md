@@ -8,8 +8,14 @@
   fonte Tahoma e painéis com barra de título em degradê azul-marinho.
 - Ícones redesenhados em SVG, coloridos e com degradês, e ícone próprio da janela.
 - Temas antigos salvos no INI voltam ao padrão sem descartar as outras preferências.
-- A página inicial mostra a proposta do projeto e o novo roteiro, e o título da janela deixa
+- A página inicial mostra o novo roteiro, sem o selo do marco, e o título da janela deixa
   de exibir o marco interno.
+- Instalador para Windows (`OldSchoolPDF-0.6.0-setup.exe`, Inno Setup com assistente clássico):
+  instalação por usuário sem administrador, atalhos, entrada opcional em "Abrir com" para PDFs
+  e desinstalação completa. Inclui a assinatura digital.
+- Executável gerado com PyInstaller por `packaging/build.py`, que também testa a abertura e o
+  leitor de PDF empacotado. O próprio executável vira o processo leitor com `--pdf-worker`.
+- O motor tolera a ausência do módulo opcional de layout do PyMuPDF, que fica fora do pacote.
 
 ## 0.5.0 · 10/11/2026 · M5
 
