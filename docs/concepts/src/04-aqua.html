@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Conceito 4 · Aqua Gel</title>
+<link rel="stylesheet" href="kit.css">
+<style>
+body { font-family: 'Lucida Sans Unicode', 'Lucida Grande', Verdana, sans-serif; font-size: 11px; color: #000; }
+.backdrop { position: absolute; inset: 0; overflow: hidden;
+  background: radial-gradient(ellipse 120% 60% at 30% 120%, #6fd0ff, transparent 60%),
+              radial-gradient(ellipse 90% 50% at 90% -10%, #1c4fa8, transparent 70%),
+              linear-gradient(160deg, #0b3f8a, #2a7fd0 50%, #5cb6f0); }
+.backdrop .swoosh { position: absolute; left: -15%; top: 46%; width: 130%; height: 260px; border-radius: 50%;
+  border-top: 26px solid rgba(255,255,255,.18); transform: rotate(-9deg); filter: blur(2px); }
+.backdrop .swoosh.b { top: 58%; border-top-width: 10px; border-top-color: rgba(255,255,255,.28); transform: rotate(-6deg); }
+.gmenu { position: absolute; left: 0; right: 0; top: 0; height: 22px; display: flex; align-items: center; gap: 2px; padding: 0 10px; z-index: 3;
+  background: linear-gradient(rgba(255,255,255,.96), rgba(232,232,232,.94)); border-bottom: 1px solid #888; box-shadow: 0 1px 4px rgba(0,0,0,.35); font-size: 12px; }
+.gmenu span { padding: 2px 9px; } .gmenu b { padding: 2px 9px 2px 4px; }
+.gmenu span.on { background: linear-gradient(#5b9cf0, #2563d9); color: #fff; }
+.gmenu .grow { flex: 1; }
+.win { inset: 42px 44px 30px 40px; border-radius: 6px 6px 4px 4px; background: #e8e8e8;
+  border: 1px solid #6d6d6d; box-shadow: 0 14px 38px rgba(0,0,0,.6); }
+/* Barra de título e ferramentas unificadas, em gradiente metálico */
+.titlebar { height: 23px; padding: 0 8px; background: linear-gradient(#ececec, #d3d3d3); border-radius: 6px 6px 0 0; }
+.titlebar .appicon { display: none; }
+.titlebar .title { text-align: center; font-size: 12.5px; color: #222; text-shadow: 0 1px #fff; }
+.caps { order: -1; gap: 7px; width: 70px; }
+.cap { width: 14px; height: 14px; border-radius: 50%; color: transparent; border: 1px solid rgba(0,0,0,.45); position: relative; }
+.cap.close { order: 1; background: radial-gradient(circle at 50% 80%, #ffb0a0, transparent 60%), radial-gradient(circle at 50% 30%, #ff6d55, #c0230e); }
+.cap.min { order: 2; background: radial-gradient(circle at 50% 80%, #ffe9a0, transparent 60%), radial-gradient(circle at 50% 30%, #ffc838, #c48a00); }
+.cap.max { order: 3; background: radial-gradient(circle at 50% 80%, #c7f5a0, transparent 60%), radial-gradient(circle at 50% 30%, #6fd23e, #2b8a0a); }
+.cap:after { content: ""; position: absolute; left: 2px; right: 2px; top: 1px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.75); }
+.cap svg { display: none; }
+.utb { flex: none; height: 62px; display: flex; align-items: center; gap: 4px; padding: 0 12px 3px;
+  background: linear-gradient(#d3d3d3, #a9a9a9); border-bottom: 1px solid #555; }
+.ub { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 64px; font-size: 10.5px; color: #111; text-shadow: 0 1px rgba(255,255,255,.6); }
+.ub svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.ub.on svg { padding: 2px; border-radius: 6px; background: rgba(0,0,0,.18); box-shadow: inset 0 1px 3px rgba(0,0,0,.45); }
+.usp { width: 1px; height: 42px; margin: 0 6px; background: #8a8a8a; box-shadow: 1px 0 rgba(255,255,255,.5); }
+.ugrow { flex: 1; }
+.seg { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; }
+.seg .s { display: flex; border: 1px solid #6a6a6a; border-radius: 11px; overflow: hidden; height: 22px; box-shadow: 0 1px rgba(255,255,255,.6); }
+.seg .s b { width: 30px; display: grid; place-items: center; font-weight: normal; border-right: 1px solid #8a8a8a;
+  background: linear-gradient(#fff, #ececec 50%, #dcdcdc 51%, #f6f6f6); }
+.seg .s b:last-child { border-right: none; }
+.seg .s b.on { background: linear-gradient(#cfe7ff, #6db3f2 50%, #4a9be8 51%, #9fd4ff); color: #fff; }
+.searchf { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; }
+.searchf span { width: 180px; height: 22px; border-radius: 11px; background: #fff; border: 1px solid #7a7a7a; box-shadow: inset 0 1px 2px rgba(0,0,0,.35);
+  display: flex; align-items: center; gap: 4px; padding: 0 8px; color: #999; }
+/* Lista lateral */
+.main { background: #fff; }
+.lpane { width: 214px; background: #d6dde5; border-right: 1px solid #8c96a3; }
+.lp-h { display: none; }
+.src { padding: 8px 0 2px; }
+.src h5 { margin: 6px 12px 3px; font-size: 10.5px; color: #59616d; text-shadow: 0 1px #fff; letter-spacing: .03em; }
+.src div { display: flex; align-items: center; gap: 6px; padding: 3px 18px; }
+.src div.on { color: #fff; font-weight: bold; background: linear-gradient(#64a0e8, #2765c7); border-top: 1px solid #4a86d4; }
+.thumbs { padding-top: 4px; gap: 6px; }
+.thumb { padding: 4px 10px 3px; border-radius: 7px; }
+.thumb .mini { width: 84px; height: 111px; box-shadow: 0 2px 5px rgba(0,0,0,.4); }
+.thumb.sel { background: rgba(56,117,215,.25); border: 1px solid rgba(56,117,215,.55); }
+.thumb span { font-size: 10px; color: #333; }
+.thumb.sel span { background: #3875d7; color: #fff; border-radius: 8px; padding: 0 7px; }
+/* Documento */
+.doctabs { height: 27px; padding: 0 8px; gap: 0; justify-content: center; background: linear-gradient(#bdbdbd, #a3a3a3); border-bottom: 1px solid #6a6a6a; }
+.dtab { height: 21px; margin-bottom: 3px; padding: 0 14px; border: 1px solid #6a6a6a; border-left: none; font-size: 10.5px;
+  background: linear-gradient(#f6f6f6, #e0e0e0 50%, #d2d2d2 51%, #ededed); }
+.dtab:first-child { border-left: 1px solid #6a6a6a; border-radius: 11px 0 0 11px; }
+.dtab:last-child { border-radius: 0 11px 11px 0; }
+.dtab.on { background: linear-gradient(#cfe7ff, #6db3f2 50%, #4a9be8 51%, #9fd4ff); color: #fff; text-shadow: 0 -1px rgba(0,0,0,.3); }
+.dtab .x { color: #fff; margin-left: 4px; }
+.pagenav { display: none; }
+.canvas { background: repeating-linear-gradient(#f4f6f8 0 2px, #e9ecef 2px 4px); }
+.page { box-shadow: 0 4px 14px rgba(0,0,0,.45); }
+/* Gaveta lateral com listras finas */
+.rpane { width: 252px; background: repeating-linear-gradient(#f2f2f2 0 2px, #e4e4e4 2px 4px); border-left: 1px solid #8a8a8a; padding: 8px; }
+.tp-head { display: none; }
+.tp-scroll { padding: 0; }
+.tg { margin-bottom: 10px; border: 1px solid #a7a7a7; border-radius: 6px; background: rgba(255,255,255,.75); overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.tg-h { height: 22px; padding: 0 8px; font-weight: bold; font-size: 10.5px; color: #333; text-shadow: 0 1px #fff;
+  background: linear-gradient(#f7f7f7, #dcdcdc); border-bottom: 1px solid #b5b5b5; }
+.tg-h .chev { transform: rotate(180deg); color: #666; }
+.tg-b { padding: 4px 6px; }
+.tg-b a { color: #000; padding: 3px 6px; border-radius: 10px; }
+.tg:first-child .tg-b a:first-child { background: linear-gradient(#64a0e8, #2765c7); color: #fff; }
+.details { line-height: 1.65; padding: 2px 4px; }
+.gel { display: flex; gap: 6px; justify-content: flex-end; margin: 4px 2px 0; }
+.gel b { height: 21px; padding: 0 14px; border-radius: 11px; border: 1px solid #7a7a7a; display: grid; place-items: center; font-weight: normal;
+  background: linear-gradient(#fff, #ececec 50%, #dcdcdc 51%, #f6f6f6); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.gel b.def { border-color: #2a5a9a; background: linear-gradient(#d6ecff, #78bbf5 50%, #4a9be8 51%, #a6d8ff); box-shadow: 0 0 4px rgba(40,120,220,.7); }
+.statusbar { height: 23px; padding: 0 12px; background: linear-gradient(#cfcfcf, #a9a9a9); border-top: 1px solid #6a6a6a; font-size: 10.5px; color: #222; text-shadow: 0 1px rgba(255,255,255,.6); border-radius: 0 0 4px 4px; }
+.statusbar .ssep { width: 14px; }
+.statusbar .grow { text-align: center; }
+</style></head>
+<body><script src="kit.js"></script><script>
+const U = (ic, l, cls = "") => `<span class="ub ${cls}">${icon(ic, 32)}<span>${l}</span></span>`;
+const utb = `<div class="utb">
+  ${U("open", "Abrir")}${U("save", "Salvar")}${U("print", "Imprimir")}<span class="usp"></span>
+  ${U("select", "Selecionar", "on")}${U("highlight", "Destacar")}${U("comment", "Anotar")}${U("stamp", "Carimbo")}<span class="usp"></span>
+  ${U("merge", "Mesclar")}${U("rotate", "Girar")}${U("ocr", "OCR")}${U("lock", "Proteger")}${U("sign", "Assinar")}
+  <span class="ugrow"></span>
+  <span class="seg"><span class="s"><b>−</b><b class="on">75%</b><b>+</b></span>Zoom</span>
+  <span class="seg"><span class="s"><b class="on">▭</b><b>☰</b><b>▦</b></span>Visualização</span>
+  <span class="searchf"><span>${icon("search", 13)} Buscar no PDF</span>Buscar</span>
+</div>`;
+buildApp({
+  title: "Caderno de revisão.pdf",
+  ribbon: utb,
+  backdrop: `<div class="backdrop"><div class="swoosh"></div><div class="swoosh b"></div></div>
+    <div class="gmenu"><b>${logo(16)}</b><b>DocForge</b>${["Arquivo","Editar","Exibir","Documento","Comentários","Ferramentas","Janela","Ajuda"].map((m,i)=>`<span class="${i===3?"on":""}">${m}</span>`).join("")}<span class="grow"></span><span>${icon("shield",13)}</span><span>Ter 13:03</span></div>`,
+  status: ["Página 1 de 4", "|", "3 anotações", "grow", "Processado neste Mac… ou PC", "|", "Sem conexão necessária"],
+});
+document.querySelector(".lpane").insertAdjacentHTML("afterbegin", `<div class="src"><h5>DOCUMENTOS</h5><div class="on">${icon("pdf",16)} Caderno de revisão</div><div>${icon("pdf",16)} Contrato 2004</div><div>${icon("batch",16)} Lote de digitalização</div><h5>PÁGINAS</h5></div>`);
+document.querySelector(".tg:nth-child(4) .tg-b").insertAdjacentHTML("beforeend", `<div class="gel"><b>Revelar</b><b class="def">Propriedades…</b></div>`);
+document.querySelector(".statusbar .grow").remove();
+document.querySelector(".statusbar .cell:nth-child(3)").insertAdjacentHTML("afterend", `<span class="grow"></span>`);
+document.querySelectorAll(".statusbar .cell")[2].textContent = "Tudo processado localmente";
+</script></body></html>

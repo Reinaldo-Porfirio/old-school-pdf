@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Conceito 1 · Luna Azul</title>
+<link rel="stylesheet" href="kit.css">
+<style>
+body { font-family: Tahoma, Verdana, sans-serif; font-size: 11px; color: #000; background: #3a6ea5; }
+.win { border: 1px solid #0831d9; border-radius: 8px 8px 0 0; background: #ece9d8; }
+/* Barra de título Luna */
+.titlebar { height: 30px; padding: 0 5px 0 7px; border-radius: 7px 7px 0 0;
+  background: linear-gradient(#0997ff 0%, #0053ee 9%, #0050ee 18%, #06f 45%, #0062f6 78%, #0058e8 90%, #003dd7 100%);
+  box-shadow: inset 0 1px 0 #3d95ff, inset 1px 0 #0a51d8, inset -1px 0 #0a51d8; }
+.titlebar .title { color: #fff; font: bold 13px 'Trebuchet MS', sans-serif; text-shadow: 1px 1px #0a1883; }
+.cap { width: 22px; height: 22px; border: 1px solid #fff; border-radius: 3px; color: #fff;
+  background: radial-gradient(circle at 30% 25%, #a8cbff, #3c81f3 55%, #1a52d1); box-shadow: inset -1px -1px 2px #13409e; }
+.cap.close { background: radial-gradient(circle at 30% 25%, #ffb59a, #e5602f 55%, #c13a0e); box-shadow: inset -1px -1px 2px #8e2205; }
+/* Barra de menus Office 2003 */
+.menubar { height: 24px; padding: 0 4px; background: linear-gradient(#e3effe, #c4dafa 60%, #a9c8f5); border-bottom: 1px solid #6a8ccb; }
+.menubar span { padding: 3px 7px; border: 1px solid transparent; }
+.menubar span:nth-child(5) { background: linear-gradient(#fff5cc, #ffdb8c); border-color: #000080; }
+/* Barras de ferramentas arredondadas */
+.toolbars { background: linear-gradient(#e3effe, #a9c8f5); padding: 3px 4px 2px; gap: 3px 6px; border-bottom: 1px solid #6a8ccb; }
+.tb { height: 30px; padding: 0 4px 0 2px; border-radius: 4px;
+  background: linear-gradient(#ffffff 0%, #e3effe 30%, #c4dafa 70%, #8bb3ec 100%);
+  box-shadow: 1px 1px 0 #5980c6, inset 0 1px 0 #fff; }
+.grip { width: 5px; height: 20px; margin: 0 4px 0 2px;
+  background: radial-gradient(circle, #275fbd 1px, transparent 1.4px) 0 0/4px 4px; }
+.tb-end { width: 11px; align-self: stretch; margin-left: 3px; border-radius: 0 4px 4px 0; color: #fff;
+  background: linear-gradient(#83a8eb, #2c5ec4); display: grid; place-items: center; }
+.tbtn { padding: 3px 4px; border: 1px solid transparent; border-radius: 2px; }
+.tbtn.on { background: linear-gradient(#ffd99a, #ffb84d); border-color: #000080; }
+.tbtn.lab:nth-of-type(2) { background: linear-gradient(#fffbe0, #ffdf8f); border-color: #000080; }
+.tsep { background: #6a8ccb; box-shadow: 1px 0 #fff; }
+.combo { width: 58px; height: 21px; padding: 0 3px 0 5px; background: #fff; border: 1px solid #7f9db9; margin: 0 2px; }
+/* Painel esquerdo */
+.main { background: #ece9d8; gap: 0; }
+.lpane { background: linear-gradient(90deg, #d6e4fb, #c1d4f6); border-right: 1px solid #6a8ccb; }
+.lp-h { height: 26px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px 0 9px;
+  color: #fff; font-weight: bold; background: linear-gradient(#5a8be8, #2c5ec4); border-bottom: 1px solid #1d43a0; }
+.lp-h .x { color: #fff; }
+.thumb span { font-weight: bold; color: #1d43a0; }
+.thumb .mini { border: 1px solid #7f9db9; box-shadow: 2px 2px 0 rgba(0, 0, 60, .25); }
+.thumb.sel { background: #fff3c4; border: 1px solid #e3a21a; border-radius: 3px; }
+.thumb.sel .mini { border: 2px solid #ff9a1e; }
+/* Abas de documento */
+.doctabs { height: 27px; padding: 3px 6px 0; background: linear-gradient(#e3effe, #c4dafa); border-bottom: 1px solid #6a8ccb; gap: 2px; }
+.dtab { padding: 3px 10px; height: 23px; border: 1px solid #8eb0e6; border-bottom: none; border-radius: 4px 4px 0 0;
+  background: linear-gradient(#fff, #dbe8fc); color: #333; }
+.dtab.on { background: #fff; border-color: #6a8ccb; border-top: 3px solid #ff9a1e; font-weight: bold; color: #000; }
+.dtab .x { color: #c13a0e; margin-left: 4px; }
+.pagenav { height: 30px; padding: 0 8px; background: linear-gradient(#f9fbff, #dbe8fc); border-bottom: 1px solid #8eb0e6; }
+.pagenav .nb { width: 20px; height: 20px; border: 1px solid #7f9db9; border-radius: 3px; display: grid; place-items: center;
+  background: linear-gradient(#fff, #d6e4fb); color: #1d43a0; }
+.pagenav .field { width: 34px; height: 20px; border: 1px solid #7f9db9; background: #fff; padding: 2px 4px; text-align: right; }
+.pagenav .grow { flex: 1; }
+.pn-info { color: #a33; font-weight: bold; }
+.canvas { background: #6f88b5 radial-gradient(circle at 50% 0, #8aa3cf, #5a74a3); }
+.page { box-shadow: 3px 3px 0 rgba(0, 0, 0, .35), 0 0 0 1px #2a3a5a; }
+/* Painel de tarefas XP */
+.rpane { background: linear-gradient(#7ba2e7, #6375d6); padding: 0; border-left: 1px solid #1d43a0; }
+.tp-head { height: 26px; display: flex; align-items: center; gap: 6px; padding: 0 6px; color: #fff; font-weight: bold;
+  background: linear-gradient(#5a8be8, #2c5ec4); border-bottom: 1px solid #1d43a0; }
+.tp-head .nav { display: flex; gap: 2px; } .tp-head .grow { flex: 1; }
+.tp-head .nav b { width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #fff, #a9c8f5); color: #1d43a0; }
+.tp-scroll { padding: 12px 12px; }
+.tg { margin-bottom: 14px; }
+.tg-h { height: 25px; padding: 0 3px 0 12px; border-radius: 5px 5px 0 0; font-weight: bold; color: #215dc6;
+  background: linear-gradient(90deg, #ffffff 35%, #c6d3f7); }
+.tg-h .chev { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; color: #215dc6;
+  background: radial-gradient(circle at 35% 30%, #fff, #b4c8f2); border: 1px solid #a9bde8; }
+.tg.special .tg-h { color: #fff; background: linear-gradient(90deg, #0049cc, #2a6ee8); }
+.tg.special .tg-h .chev { background: radial-gradient(circle at 35% 30%, #fff, #8fb0ee); color: #0049cc; }
+.tg-b { background: #d6dff7; border: 1px solid #fff; border-top: none; padding: 8px 10px; }
+.tg.special .tg-b { background: #eff3ff; }
+.tg-b a { color: #215dc6; padding: 3px 0; }
+.tg-b a:nth-child(2) span { text-decoration: underline; color: #428eff; }
+.details { color: #000; line-height: 1.6; } .details b { color: #000; }
+/* Barra de status */
+.statusbar { height: 25px; padding: 0 4px; background: linear-gradient(#c4dafa, #8bb3ec); border-top: 1px solid #5980c6; color: #0a246a; }
+.statusbar .cell { padding: 0 9px; }
+.statusbar .ssep { width: 1px; height: 16px; background: #5980c6; box-shadow: 1px 0 #e3effe; }
+.statusbar .cell:last-child { height: 19px; padding: 0 10px 0 6px; border-radius: 9px; color: #fff; font-weight: bold;
+  background: linear-gradient(#7ad35a, #2f9a16); border: 1px solid #1e6a0a; }
+/* Balão de dica */
+.balloon { position: absolute; right: 18px; bottom: 34px; width: 285px; background: #ffffe1; border: 1px solid #000;
+  border-radius: 8px; padding: 9px 11px 10px; box-shadow: 3px 3px 5px rgba(0,0,0,.35); font-size: 11px; line-height: 1.45; }
+.balloon h4 { margin: 0 0 4px; display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.balloon h4 .x { margin-left: auto; width: 14px; height: 14px; border: 1px solid #999; border-radius: 2px; display: grid; place-items: center; color: #555; }
+.balloon:after { content: ""; position: absolute; right: 44px; bottom: -14px; border: 7px solid transparent; border-top: 8px solid #000; }
+.balloon:before { content: ""; position: absolute; right: 45px; bottom: -12px; border: 6px solid transparent; border-top: 7px solid #ffffe1; z-index: 1; }
+</style></head>
+<body><script src="kit.js"></script><script>
+buildApp({
+  labels: "some",
+  iconSize: 20,
+  tpHead: `<div class="tp-head"><span class="nav"><b>${ARROW("l")}</b><b>${ARROW("r")}</b></span><span>Tarefas de PDF</span><span class="grow"></span>${ARROW("d")}<b class="x">${CAP.close}</b></div>`,
+  status: ["Pronto", "|", "Página 1 de 4", "|", "Zoom 75%", "|", "Alterações não gravadas", "grow", `${icon("shield", 14)} 100% local · offline`],
+  overlay: `<div class="balloon"><h4>${icon("help", 16)} Dica do dia<span class="x">${CAP.close}</span></h4>Arraste as miniaturas para reorganizar as páginas. Nada sai do seu computador: tudo é processado localmente.</div>`,
+});
+</script></body></html>

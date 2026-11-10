@@ -1,0 +1,71 @@
+/* Layout comum aos cinco conceitos. A aparência fica no CSS de cada conceito. */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { font-size: 12px; -webkit-font-smoothing: antialiased; }
+.stage { width: 1440px; height: 900px; position: relative; overflow: hidden; }
+.win { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+.titlebar { display: flex; align-items: center; gap: 6px; flex: none; }
+.titlebar .title { flex: 1; white-space: nowrap; }
+.caps { display: flex; gap: 2px; }
+.cap { display: grid; place-items: center; }
+.menubar { display: flex; align-items: center; flex: none; }
+.menubar span { padding: 3px 8px; }
+.toolbars { flex: none; display: flex; flex-wrap: wrap; }
+.tb { display: inline-flex; align-items: center; gap: 1px; }
+.tbtn { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.tbtn svg { flex: none; }
+.tsep { width: 1px; align-self: stretch; margin: 3px 3px; }
+.combo { display: inline-flex; align-items: center; justify-content: space-between; gap: 6px; }
+.main { flex: 1; display: flex; min-height: 0; }
+.lpane { width: 190px; flex: none; display: flex; flex-direction: column; overflow: hidden; }
+.rpane { width: 262px; flex: none; display: flex; flex-direction: column; overflow: hidden; }
+.tp-scroll { flex: 1; overflow: hidden; }
+.tg-h { display: flex; align-items: center; justify-content: space-between; }
+.tg-b a { display: flex; align-items: center; gap: 7px; text-decoration: none; }
+.docarea { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.doctabs { display: flex; align-items: flex-end; flex: none; }
+.dtab { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.pagenav { display: flex; align-items: center; gap: 6px; flex: none; }
+.canvas { flex: 1; overflow: hidden; position: relative; display: flex; flex-direction: column;
+          align-items: center; padding-top: 22px; gap: 18px; }
+.thumbs { flex: 1; overflow: hidden; display: flex; flex-direction: column; align-items: center;
+          gap: 8px; padding: 10px 0; }
+.thumb { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 5px 8px; }
+.statusbar { display: flex; align-items: center; flex: none; }
+.statusbar .cell { white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.statusbar .grow { flex: 1; }
+
+/* Página PDF fictícia */
+.page { width: 470px; height: 622px; background: #fff; position: relative; flex: none;
+        font-family: Arial, Helvetica, sans-serif; color: #222; }
+.pg-head { background: #1f3556; color: #fff; margin: 28px 28px 0; padding: 10px 14px 12px; }
+.pg-head small { font-size: 7px; letter-spacing: .1em; opacity: .8; }
+.pg-head h1 { font-size: 20px; margin: 5px 0 0; font-weight: normal; }
+.pg-body { padding: 16px 28px; font-size: 9.5px; line-height: 1.6; }
+.pg-body p { margin: 0 0 6px; }
+.pg-body mark { background: #fff23a; padding: 0 1px; }
+.ln { height: 5px; background: #dde3ea; margin: 8px 0; border-radius: 1px; }
+.pg-box { border: 1px solid #c5d1df; background: #f3f6fa; padding: 10px 12px; margin: 14px 0; }
+.pg-box b { color: #2a4f7c; font-weight: normal; font-size: 10px; }
+.pg-redact { display: inline-block; background: #000; color: transparent; }
+.pg-stamp { position: absolute; right: 44px; top: 404px; border: 2.5px solid #c8231a; color: #c8231a;
+            font: bold 17px 'Times New Roman', serif; padding: 2px 9px; transform: rotate(-8deg);
+            letter-spacing: .05em; }
+.pg-sign { position: absolute; left: 28px; top: 506px; font-size: 7px; color: #777; }
+.pg-sign i { display: block; font: 25px 'Segoe Script', 'Brush Script MT', cursive; color: #1b3d8f;
+             font-style: normal; margin-top: 2px; }
+.pg-sign u { display: block; width: 190px; border-top: 1px solid #999; margin-top: 2px; }
+.pg-foot { position: absolute; left: 28px; right: 28px; bottom: 22px; border-top: 1px solid #ddd;
+           padding-top: 5px; font-size: 6.5px; color: #999; }
+.pg-sel { position: absolute; left: 34px; top: 334px; width: 230px; height: 46px;
+          border: 1px dashed #2a62d0; background: rgba(255, 255, 210, .55); font-size: 8.5px;
+          padding: 4px 6px; color: #333; }
+.pg-sel i { position: absolute; width: 6px; height: 6px; background: #fff; border: 1px solid #2a62d0; }
+.pg-note { position: absolute; left: 400px; top: 160px; }
+
+/* Miniaturas */
+.mini { width: 96px; height: 127px; background: #fff; position: relative; overflow: hidden; }
+.mini .mh { height: 15px; margin: 6px 6px 5px; background: #1f3556; }
+.mini .ml { height: 2px; background: #cfd6df; margin: 4px 7px; }
+.mini .mb { height: 18px; margin: 6px 7px; background: #eef2f7; border: 1px solid #cfd8e3; }
+.mini .mm { height: 3px; width: 50px; background: #fff23a; margin: 5px 7px; }

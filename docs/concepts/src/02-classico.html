@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Conceito 2 · Clássico 2000</title>
+<link rel="stylesheet" href="kit.css">
+<style>
+:root { --face: #d4d0c8; --hi: #ffffff; --lt: #e8e6e0; --sh: #808080; --dk: #404040; }
+body { font-family: Tahoma, 'MS Sans Serif', sans-serif; font-size: 11px; background: #3a6ea5; }
+.raised { box-shadow: inset -1px -1px var(--dk), inset 1px 1px var(--hi), inset -2px -2px var(--sh), inset 2px 2px var(--lt); }
+.sunken { box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi), inset 2px 2px var(--dk), inset -2px -2px var(--lt); }
+.win { background: var(--face); padding: 3px;
+  box-shadow: inset -1px -1px var(--dk), inset 1px 1px var(--lt), inset -2px -2px var(--sh), inset 2px 2px var(--hi); }
+.titlebar { height: 22px; padding: 0 3px 0 4px; background: linear-gradient(90deg, #0a246a, #3a6ea5 55%, #a6caf0); }
+.titlebar .title { color: #fff; font-weight: bold; font-size: 11px; }
+.cap { width: 18px; height: 16px; background: var(--face); color: #000;
+  box-shadow: inset -1px -1px var(--dk), inset 1px 1px var(--hi), inset -2px -2px var(--sh), inset 2px 2px var(--lt); }
+.cap.close { margin-left: 2px; }
+.cap svg { transform: scale(.8); }
+.menubar { height: 21px; padding: 0 2px; }
+.menubar span { padding: 2px 6px; }
+.menubar span:nth-child(4) { background: #0a246a; color: #fff; }
+.toolbars { flex-direction: column; padding: 2px 0; gap: 2px; border-top: 1px solid var(--sh); border-bottom: 1px solid var(--hi); box-shadow: 0 -1px var(--hi), 0 1px var(--sh); }
+.tb { height: 28px; padding: 0 2px; gap: 0; }
+.grip { width: 3px; height: 22px; margin: 0 5px 0 2px; box-shadow: inset -1px -1px var(--sh), inset 1px 1px var(--hi); }
+.tb-end { display: none; }
+.tbtn { padding: 3px 4px; height: 26px; }
+.tbtn span { padding-right: 2px; }
+.tbtn.on { background: repeating-conic-gradient(#fff 0 25%, var(--face) 0 50%) 0 0/2px 2px;
+  box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi); }
+.tbtn.lab:first-of-type { box-shadow: inset -1px -1px var(--sh), inset 1px 1px var(--hi); }
+.tsep { width: 2px; margin: 3px 4px; box-shadow: inset 1px 0 var(--sh), inset -1px 0 var(--hi); }
+.combo { width: 60px; height: 21px; margin: 0 3px; background: #fff; padding-left: 4px;
+  box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi), inset 2px 2px var(--dk), inset -2px -2px var(--lt); }
+.combo svg { width: 16px; height: 17px; padding: 4px; margin-right: 2px; background: var(--face);
+  box-shadow: inset -1px -1px var(--dk), inset 1px 1px var(--hi), inset -2px -2px var(--sh); }
+.main { padding: 3px 0; gap: 3px; }
+/* Painel esquerdo com abas verticais, como os leitores de PDF da época */
+.lpane { width: 196px; position: relative; padding-left: 24px;
+  box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi); }
+.vtabs { position: absolute; left: 2px; top: 26px; display: flex; flex-direction: column; gap: 2px; }
+.vtabs span { white-space: nowrap; writing-mode: vertical-rl; transform: rotate(180deg); padding: 9px 3px; background: var(--face);
+  box-shadow: inset 1px 1px var(--hi), inset -1px -1px var(--dk); font-size: 10px; }
+.vtabs span.on { background: #fff; font-weight: bold; margin-right: -3px; }
+.lp-h { height: 22px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 6px;
+  font-weight: bold; margin: 2px 2px 0 0; background: linear-gradient(90deg, #808080, #c0c0c0); color: #fff; }
+.lp-h .x { color: #000; background: var(--face); width: 14px; height: 13px; display: grid; place-items: center;
+  box-shadow: inset -1px -1px var(--dk), inset 1px 1px var(--hi); }
+.lp-h .x svg { transform: scale(.7); }
+.thumbs { background: #fff; margin: 0 2px 2px 0; box-shadow: inset 1px 1px var(--sh); }
+.thumb .mini { border: 1px solid #000; }
+.thumb.sel span { background: #0a246a; color: #fff; padding: 0 5px; }
+.thumb.sel .mini { outline: 2px solid #0a246a; outline-offset: 1px; }
+/* Área de documento com abas clássicas */
+.docarea { box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi); padding: 2px; }
+.doctabs { height: 24px; padding: 2px 2px 0; gap: 0; }
+.dtab { height: 20px; padding: 0 9px; background: var(--face); position: relative; top: 1px;
+  box-shadow: inset 1px 1px var(--hi), inset -1px 0 var(--dk), inset -2px 0 var(--sh); }
+.dtab.on { height: 23px; top: 1px; z-index: 1; font-weight: bold; box-shadow: inset 1px 1px var(--hi), inset -1px 0 var(--dk), inset -2px 0 var(--sh), inset 0 -2px var(--face); }
+.dtab .x { margin-left: 4px; transform: scale(.75); }
+.pagenav { height: 29px; padding: 0 6px; border-top: 1px solid var(--hi); box-shadow: inset 0 1px var(--hi); }
+.pagenav .nb { width: 22px; height: 20px; display: grid; place-items: center; background: var(--face);
+  box-shadow: inset -1px -1px var(--dk), inset 1px 1px var(--hi), inset -2px -2px var(--sh); }
+.pagenav .field { width: 36px; height: 20px; background: #fff; padding: 3px 4px; text-align: right;
+  box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi), inset 2px 2px var(--dk); }
+.pagenav .grow { flex: 1; }
+.canvas { background: #808080; margin: 0; box-shadow: inset 1px 1px var(--dk), inset 2px 2px var(--sh); }
+.page { box-shadow: 4px 4px 0 #000; outline: 1px solid #000; }
+/* Painel direito com caixas de grupo gravadas */
+.rpane { width: 236px; padding: 4px 6px; box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi); }
+.tp-head { font-weight: bold; padding: 4px 2px 8px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--sh); box-shadow: 0 1px var(--hi); margin-bottom: 10px; }
+.tg { position: relative; border: 1px solid var(--sh); box-shadow: 1px 1px var(--hi), inset 1px 1px var(--hi); margin: 14px 0 12px; padding: 10px 8px 6px; }
+.tg-h { position: absolute; top: -8px; left: 7px; padding: 0 4px; background: var(--face); }
+.tg-h .chev { display: none; }
+.tg-b a { color: #000; padding: 3px 2px; }
+.tg:first-child .tg-b a:nth-child(3) { background: #0a246a; color: #fff; outline: 1px dotted #fff; outline-offset: -1px; }
+.details { line-height: 1.6; }
+/* Barra de status com painéis rebaixados */
+.statusbar { height: 22px; gap: 2px; padding-top: 2px; }
+.statusbar .cell { height: 19px; padding: 0 8px; box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi); }
+.statusbar .grow { height: 19px; box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi); }
+.statusbar .ssep { display: none; }
+.sizegrip { width: 14px; height: 14px; align-self: flex-end;
+  background: linear-gradient(135deg, transparent 45%, var(--sh) 45% 52%, var(--hi) 52% 58%, transparent 58% 66%, var(--sh) 66% 72%, var(--hi) 72% 78%, transparent 78%); }
+/* Diálogo clássico */
+.dlg { position: absolute; left: 520px; top: 268px; width: 384px; background: var(--face); padding: 3px;
+  box-shadow: inset -1px -1px var(--dk), inset 1px 1px var(--lt), inset -2px -2px var(--sh), inset 2px 2px var(--hi), 4px 4px 0 rgba(0,0,0,.35); }
+.dlg .titlebar .caps .cap.min, .dlg .titlebar .caps .cap.max { display: none; }
+.dlg-b { padding: 12px 12px 10px; }
+.dlg-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.dlg-row label { width: 120px; }
+.dlg-in { flex: 1; height: 21px; background: #fff; padding: 3px 5px; letter-spacing: 2px;
+  box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi), inset 2px 2px var(--dk), inset -2px -2px var(--lt); }
+.dlg fieldset { border: 1px solid var(--sh); box-shadow: 1px 1px var(--hi), inset 1px 1px var(--hi); margin: 4px 0 12px; padding: 6px 10px 8px; }
+.dlg legend { padding: 0 3px; }
+.chk { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+.chk b { width: 13px; height: 13px; background: #fff; font-size: 10px; line-height: 12px; text-align: center;
+  box-shadow: inset 1px 1px var(--sh), inset -1px -1px var(--hi), inset 2px 2px var(--dk); }
+.btns { display: flex; justify-content: flex-end; gap: 6px; }
+.btn { width: 78px; height: 23px; display: grid; place-items: center; background: var(--face);
+  box-shadow: inset -1px -1px var(--dk), inset 1px 1px var(--hi), inset -2px -2px var(--sh), inset 2px 2px var(--lt); }
+.btn.def { outline: 1px solid #000; }
+.btn.def span { outline: 1px dotted #000; padding: 1px 6px; }
+</style></head>
+<body><script src="kit.js"></script><script>
+buildApp({
+  labels: "some",
+  iconSize: 20,
+  lpTitle: "Miniaturas",
+  lpTabs: `<div class="vtabs"><span>Marcadores</span><span class="on">Miniaturas</span><span>Comentários</span><span>Assinaturas</span></div>`,
+  tpHead: `<div class="tp-head">${icon("pdf", 20)} Ferramentas do documento</div>`,
+  pagenavRight: `<span>${icon("lock", 16)}</span><span>Documento sem proteção</span>`,
+  status: ["Pronto", "Página 1 de 4", "75%", "8,27 x 11,69 pol", "grow", "MOD", "Local"],
+});
+document.querySelector(".statusbar").insertAdjacentHTML("beforeend", `<span class="sizegrip"></span>`);
+document.querySelector(".stage").insertAdjacentHTML("beforeend", `
+<div class="dlg">${titlebar({ title: "Proteger cópia com senha", logoSize: 16 })}
+  <div class="dlg-b">
+    <div class="dlg-row" style="align-items:flex-start;gap:12px">${icon("lock", 32)}<div>Defina senhas distintas para abrir o documento e para alterar suas permissões. A criptografia usada é AES de 256 bits.</div></div>
+    <div class="dlg-row"><label>Senha de abertura:</label><span class="dlg-in">••••••••</span></div>
+    <div class="dlg-row"><label>Senha do proprietário:</label><span class="dlg-in">••••••••••</span></div>
+    <fieldset><legend>Permissões</legend>
+      <div class="chk"><b>✓</b>Permitir impressão em alta qualidade</div>
+      <div class="chk"><b>✓</b>Permitir cópia de texto e imagens</div>
+      <div class="chk"><b></b>Permitir alteração do conteúdo</div>
+    </fieldset>
+    <div class="btns"><span class="btn def"><span>OK</span></span><span class="btn">Cancelar</span><span class="btn">Ajuda</span></div>
+  </div></div>`);
+</script></body></html>

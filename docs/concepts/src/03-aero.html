@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Conceito 3 · Aero Faixa</title>
+<link rel="stylesheet" href="kit.css">
+<style>
+body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 11.5px; color: #15284b; }
+/* Papel de parede original no espírito Frutiger Aero */
+.backdrop { position: absolute; inset: 0; overflow: hidden;
+  background: radial-gradient(ellipse at 20% 110%, #9be15d 0 18%, transparent 45%),
+              radial-gradient(ellipse at 85% 105%, #3fbf6a 0 15%, transparent 40%),
+              linear-gradient(170deg, #0a4f9e 0%, #2b8fe0 40%, #7fd0f5 70%, #c9f0ff 100%); }
+.backdrop i { position: absolute; border-radius: 50%; border: 1px solid rgba(255,255,255,.6);
+  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,.9) 0 8%, rgba(255,255,255,.12) 30%, rgba(160,220,255,.15) 70%, rgba(255,255,255,.45) 100%); }
+.backdrop .ray { position: absolute; left: -10%; top: -20%; width: 70%; height: 140%; transform: rotate(25deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18) 40%, transparent 60%, rgba(255,255,255,.12) 75%, transparent); }
+/* Moldura de vidro */
+.win { inset: 22px 30px 26px; border-radius: 9px; padding: 0 7px 7px;
+  background: linear-gradient(rgba(120, 175, 220, .55), rgba(70, 120, 175, .5));
+  backdrop-filter: blur(7px); border: 1px solid rgba(20, 40, 70, .75);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.55), 0 10px 40px rgba(0, 20, 60, .55); }
+.titlebar { height: 50px; padding: 0 0 0 54px; position: relative; }
+.titlebar .appicon { display: none; }
+.titlebar .title { display: flex; align-items: center; gap: 2px; }
+.qat { display: flex; gap: 1px; padding: 2px 6px 2px 10px; border-radius: 0 10px 10px 0;
+  background: linear-gradient(rgba(255,255,255,.55), rgba(220,235,250,.3)); border: 1px solid rgba(40,70,110,.45); }
+.qat svg { margin: 1px 2px; }
+.ttext { flex: 1; text-align: center; font-size: 12.5px; color: #000; text-shadow: 0 0 10px #fff, 0 0 10px #fff, 0 0 6px #fff; }
+.caps { align-self: flex-start; gap: 0; }
+.cap { height: 19px; width: 27px; color: #fff; border: 1px solid rgba(20,40,70,.8);
+  background: linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,.18) 50%, rgba(40,80,130,.35) 51%, rgba(110,170,220,.5)); }
+.cap.min { border-radius: 0 0 0 5px; } .cap.close { width: 46px; border-radius: 0 0 5px 0;
+  background: linear-gradient(#f0a090, #d65640 50%, #b8240f 51%, #e2603c); box-shadow: 0 0 9px rgba(255,90,50,.8); }
+.cap svg { filter: drop-shadow(0 0 1px #000); }
+.orb { position: absolute; left: 13px; top: 8px; width: 48px; height: 48px; border-radius: 50%; z-index: 5;
+  display: grid; place-items: center; border: 1px solid #2b4f80;
+  background: radial-gradient(circle at 50% 85%, #9fd8ff 0 20%, transparent 55%), radial-gradient(circle at 50% 40%, #fff 0, #d7e8fa 30%, #6f9fd8 70%, #2e5c9a);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.55), 0 2px 6px rgba(0,0,0,.45); }
+.orb:after { content: ""; position: absolute; left: 6px; right: 6px; top: 3px; height: 20px; border-radius: 50%;
+  background: linear-gradient(rgba(255,255,255,.95), rgba(255,255,255,0)); }
+/* Faixa de opções */
+.ribbon { flex: none; background: #bfdbff; border: 1px solid #8db2e3; border-radius: 4px 4px 0 0; }
+.rtabs { height: 25px; display: flex; align-items: flex-end; padding-left: 52px; gap: 2px;
+  background: linear-gradient(#dfecfb, #c8dbf3); border-radius: 4px 4px 0 0; }
+.rtabs span { padding: 3px 13px 4px; color: #15428b; border-radius: 3px 3px 0 0; }
+.rtabs span.on { background: linear-gradient(#fff, #e7f0fb); border: 1px solid #8db2e3; border-bottom: none; color: #15428b; }
+.rtabs span.ctx { background: linear-gradient(rgba(255,180,60,.4), rgba(255,220,140,.2)); color: #8a4a00; margin-left: 18px; }
+.rbody { height: 96px; display: flex; gap: 3px; padding: 3px 4px;
+  background: linear-gradient(#e7f0fb 0%, #dbe8f7 20%, #c7dbf2 70%, #d8e8f9 100%); border-top: 1px solid #8db2e3; }
+.rg { display: flex; flex-direction: column; border: 1px solid #a3c1e8; border-radius: 3px;
+  background: linear-gradient(#f1f6fd, #dbe8f7 70%, #d0e1f6); box-shadow: inset 0 0 0 1px rgba(255,255,255,.7); }
+.rg .items { flex: 1; display: flex; align-items: flex-start; gap: 1px; padding: 2px 3px 0; }
+.rg .lbl { height: 16px; text-align: center; color: #3e6aaa; font-size: 11px; border-radius: 0 0 3px 3px;
+  background: linear-gradient(#c2d9f0, #b4cfee); position: relative; }
+.rg .lbl:after { content: ""; position: absolute; right: 3px; bottom: 3px; width: 7px; height: 7px; border-right: 1px solid #5d84bd; border-bottom: 1px solid #5d84bd; }
+.big { width: 54px; height: 72px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 3px;
+  text-align: center; line-height: 1.15; border: 1px solid transparent; border-radius: 3px; }
+.big.hot { background: linear-gradient(#fffbe8, #ffe9a8 40%, #ffd767 41%, #ffe69b); border-color: #dbce99; box-shadow: inset 0 0 0 1px rgba(255,255,255,.7); }
+.stack { display: flex; flex-direction: column; gap: 1px; padding-top: 1px; }
+.small { display: flex; align-items: center; gap: 5px; height: 22px; padding: 0 6px 0 3px; white-space: nowrap; border: 1px solid transparent; border-radius: 3px; }
+.small.on { background: linear-gradient(#fde3a5, #fbb050 40%, #f99a2c 41%, #fdd789); border-color: #c2a362; }
+.zoomrow { display: flex; align-items: center; gap: 4px; }
+.mini-combo { width: 56px; height: 20px; background: #fff; border: 1px solid #abc1de; display: flex; align-items: center; justify-content: space-between; padding: 0 3px; }
+/* Corpo */
+.main { background: #bfdbff; border: 1px solid #8db2e3; border-top: none; }
+.lpane { background: linear-gradient(90deg, #e3eefb, #cfe0f5); border-right: 1px solid #8db2e3; }
+.lp-h { height: 26px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px 0 10px;
+  font-weight: bold; color: #15428b; background: linear-gradient(#e3eefb, #c4d9f3 50%, #b0cdf0 51%, #c9def6); border-bottom: 1px solid #8db2e3; }
+.thumb .mini { box-shadow: 0 1px 4px rgba(0,30,80,.45); }
+.thumb.sel { border-radius: 3px; background: linear-gradient(#fff4cf, #ffd97b); border: 1px solid #e3b84a; }
+.doctabs { height: 30px; padding: 4px 6px 0; gap: 2px; background: linear-gradient(#dfecfb, #c3d8f2); border-bottom: 1px solid #8db2e3; }
+.dtab { height: 25px; padding: 0 12px; border: 1px solid #a3c1e8; border-bottom: none; border-radius: 5px 5px 0 0;
+  background: linear-gradient(rgba(255,255,255,.7), rgba(200,220,245,.6)); }
+.dtab.on { background: linear-gradient(#fff, #eef5fd); border-color: #6f97cf; font-weight: 600; box-shadow: inset 0 2px 0 #ffb93e; }
+.dtab .x { color: #a33; margin-left: 4px; }
+.pagenav { display: none; }
+.canvas { background: linear-gradient(#a7c3e6, #8aabd8); }
+.page { box-shadow: 0 2px 10px rgba(0, 25, 70, .5); }
+.rpane { background: linear-gradient(90deg, #d4e3f7, #e6effb); border-left: 1px solid #8db2e3; }
+.tp-head { height: 26px; display: flex; align-items: center; padding: 0 10px; font-weight: bold; color: #15428b;
+  background: linear-gradient(#e3eefb, #c4d9f3 50%, #b0cdf0 51%, #c9def6); border-bottom: 1px solid #8db2e3; }
+.tp-scroll { padding: 10px; }
+.tg { margin-bottom: 10px; border: 1px solid #9ebbe2; border-radius: 4px; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0,40,100,.18); }
+.tg-h { height: 24px; padding: 0 6px 0 10px; font-weight: 600; color: #15428b; background: linear-gradient(#f5f9fe, #d9e7f8 50%, #c8dcf5 51%, #dce9f9); border-bottom: 1px solid #b6cdec; }
+.tg-h .chev { color: #15428b; }
+.tg.special .tg-h { color: #fff; background: linear-gradient(#7fb0ea, #3d7ad0 50%, #2563c0 51%, #4c8ce0); text-shadow: 0 1px 1px #123a7a; }
+.tg.special .tg-h .chev { color: #fff; }
+.tg-b { padding: 5px 8px; }
+.tg-b a { color: #15428b; padding: 3px 4px; border-radius: 2px; }
+.details { line-height: 1.6; color: #333; }
+.statusbar { height: 26px; padding: 0 10px; margin-top: 0; color: #15428b; border: 1px solid #8db2e3; border-top: none; border-radius: 0 0 4px 4px;
+  background: linear-gradient(#dfecfb, #c9dcf5 50%, #b6d0f1 51%, #cfe1f7); }
+.statusbar .cell { padding: 0 8px; }
+.statusbar .ssep { width: 1px; height: 16px; background: #8db2e3; box-shadow: 1px 0 #fff; }
+.zslider { display: flex; align-items: center; gap: 6px; }
+.zslider .track { width: 110px; height: 2px; background: #6f8fbd; position: relative; box-shadow: 0 1px #fff; }
+.zslider .track b { position: absolute; left: 44px; top: -6px; width: 9px; height: 14px; border-radius: 2px; border: 1px solid #47689b; background: linear-gradient(#fff, #c6d8f0); }
+.zslider .pm { width: 15px; height: 15px; border-radius: 50%; border: 1px solid #6f8fbd; display: grid; place-items: center; background: linear-gradient(#fff, #c9dcf5); font-weight: bold; font-size: 12px; line-height: 1; }
+/* Dica de tela avançada */
+.tip { position: absolute; left: 196px; top: 200px; width: 300px; padding: 9px 11px; border: 1px solid #767676; border-radius: 2px;
+  background: linear-gradient(#fff, #e4ecf7); box-shadow: 2px 3px 6px rgba(0,0,0,.4); font-size: 11px; color: #4c4c4c; z-index: 9; }
+.tip h4 { margin: 0 0 7px; color: #222; font-size: 11.5px; }
+.tip .row { display: flex; gap: 10px; align-items: flex-start; }
+.tip .row svg { flex: none; padding: 4px; background: #fff; border: 1px solid #ccd; }
+.tip hr { border: none; border-top: 1px solid #9eb6ce; margin: 9px 0 6px; }
+.tip .f1 { display: flex; align-items: center; gap: 6px; font-weight: bold; color: #444; }
+</style></head>
+<body><script src="kit.js"></script><script>
+const B = (ic, l, cls = "") => `<span class="big ${cls}">${icon(ic, 32)}<span>${l}</span></span>`;
+const S = (ic, l, cls = "") => `<span class="small ${cls}">${icon(ic, 16)}${l}</span>`;
+const G = (label, items) => `<div class="rg"><div class="items">${items}</div><div class="lbl">${label}</div></div>`;
+const ribbon = `<div class="ribbon">
+  <div class="rtabs"><span>Início</span><span>Organizar</span><span class="on">Comentar</span><span>Formulários</span><span>Segurança</span><span>OCR</span><span>Exibir</span><span class="ctx">Ferramentas de anotação</span></div>
+  <div class="rbody">
+    ${G("Área de transferência", B("open", "Abrir") + `<div class="stack">${S("save", "Salvar")}${S("print", "Imprimir")}${S("undo", "Desfazer")}</div>`)}
+    ${G("Marcar texto", B("highlight", "Destacar<br>texto", "hot") + `<div class="stack">${S("underline", "Sublinhar")}${S("select", "Selecionar", "on")}${S("search", "Localizar")}</div>`)}
+    ${G("Comentários", B("comment", "Novo<br>comentário") + B("textbox", "Caixa de<br>texto") + `<div class="stack">${S("stamp", "Carimbo")}${S("shape", "Formas")}${S("image", "Imagem")}</div>`)}
+    ${G("Páginas", B("merge", "Mesclar<br>PDFs") + `<div class="stack">${S("split", "Dividir")}${S("extract", "Extrair")}${S("rotate", "Girar")}</div>`)}
+    ${G("Proteger", B("lock", "Proteger<br>cópia") + B("sign", "Assinar") + `<div class="stack">${S("redact", "Redigir")}${S("meta", "Metadados")}${S("shield", "Verificar")}</div>`)}
+    ${G("Exibição", `<div class="stack"><span class="zoomrow">${icon("zoomout", 16)}<span class="mini-combo">75%${ARROW("d")}</span>${icon("zoomin", 16)}</span>${S("fit", "Ajustar à página")}${S("continuous", "Rolagem contínua")}</div>`)}
+  </div></div>`;
+buildApp({
+  title: `<span class="qat">${icon("save", 16)}${icon("undo", 16)}${icon("redo", 16)}${icon("print", 16)}${ARROW("d")}</span><span class="ttext">Caderno de revisão.pdf - DocForge Ultimate</span>`,
+  ribbon,
+  backdrop: `<div class="backdrop"><div class="ray"></div>${[[60,90,70],[1320,140,110],[1240,700,60],[110,720,130],[700,40,40],[1380,520,34],[30,420,46]].map(([x,y,s]) => `<i style="left:${x}px;top:${y}px;width:${s}px;height:${s}px"></i>`).join("")}</div>`,
+  tpHead: `<div class="tp-head">Painel de tarefas</div>`,
+  status: ["Página: 1 de 4", "|", "3 anotações", "|", `${icon("shield", 14)} Processamento local`, "grow", `<span class="zslider">75% <span class="pm">−</span><span class="track"><b></b></span><span class="pm">+</span></span>`],
+  overlay: `<div class="tip"><h4>Destacar texto (Ctrl+Shift+H)</h4><div class="row">${icon("highlight", 32)}<div>Marque trechos do documento com cor de marca-texto. O destaque fica gravado como anotação e pode ser removido depois.</div></div><hr><div class="f1">${icon("help", 16)} Pressione F1 para obter mais ajuda.</div></div>`,
+});
+document.querySelector(".win").insertAdjacentHTML("afterbegin", `<div class="orb">${logo(30)}</div>`);
+</script></body></html>
