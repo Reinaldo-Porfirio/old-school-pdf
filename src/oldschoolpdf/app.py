@@ -14,6 +14,7 @@ from oldschoolpdf.application.pdf_viewer import PdfWorkspace
 from oldschoolpdf.infrastructure.dependency_probe import LocalDependencyProbe
 from oldschoolpdf.infrastructure.pdf_process import PdfProcess
 from oldschoolpdf.infrastructure.settings_repository import SettingsRepository
+from oldschoolpdf.ui.icons import app_icon
 from oldschoolpdf.ui.main_window import MainWindow
 
 
@@ -21,6 +22,7 @@ def configure_application(app: QApplication) -> None:
     app.setOrganizationName("")
     app.setApplicationName("Old School PDF")
     app.setApplicationVersion(__version__)
+    app.setWindowIcon(app_icon())
     QLocale.setDefault(QLocale(QLocale.Language.Portuguese, QLocale.Country.Brazil))
     # Infraestrutura pronta para QTranslator e catálogos próprios nos próximos idiomas.
     translator = QTranslator(app)

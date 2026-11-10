@@ -1,5 +1,16 @@
 # Alterações
 
+## 0.6.0 · 10/11/2026 · Old School PDF
+
+- Novo nome: DocForge Ultimate passa a se chamar **Old School PDF**. Pacote `oldschoolpdf`,
+  comando `python -m oldschoolpdf` e preferências em `%LOCALAPPDATA%\Old School PDF`.
+- Tema único **Clássico 2000**, com o estilo nativo "Windows" do Qt, paleta cinza com relevo 3D,
+  fonte Tahoma e painéis com barra de título em degradê azul-marinho.
+- Ícones redesenhados em SVG, coloridos e com degradês, e ícone próprio da janela.
+- Temas antigos salvos no INI voltam ao padrão sem descartar as outras preferências.
+- A página inicial mostra a proposta do projeto e o novo roteiro, e o título da janela deixa
+  de exibir o marco interno.
+
 ## 0.5.0 · 10/11/2026 · M5
 
 - Remoção seletiva de Info e XMP em cópias e proteção AES-256 com senhas distintas.

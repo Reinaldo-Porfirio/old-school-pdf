@@ -6,7 +6,9 @@ from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QDockWidget, QLabel, QMainWindow, QTabWidget, QToolBar
 
 from oldschoolpdf.app import create_window
+from oldschoolpdf.application.preferences import DEFAULT_THEME
 from oldschoolpdf.ui.main_window import FUTURE_COMMANDS
+from oldschoolpdf.ui.themes import CLASSIC
 
 
 def test_real_window_has_classic_widgets_and_portuguese_menus(window):
@@ -77,14 +79,14 @@ def test_keyboard_shortcuts_work_with_toolbars_hidden(window, qtbot):
     qtbot.waitUntil(lambda: window.tabs.currentWidget().property("page_key") == "guide")
 
 
-def test_themes_change_immediately_and_persist(window, qapp):
-    before = qapp.palette().window().color().name()
-    window.theme_actions["Graphite Pro"].trigger()
-    assert qapp.property("oldschoolpdfTheme") == "Graphite Pro"
-    assert qapp.palette().window().color().name() != before
-    assert window.settings.load_preferences().theme == "Graphite Pro"
-    window.theme_actions["Classic Light"].trigger()
-    assert qapp.property("oldschoolpdfTheme") == "Classic Light"
+def test_classic_theme_is_applied_and_persisted(window, qapp):
+    window.theme_actions[DEFAULT_THEME].trigger()
+    assert window.theme_actions[DEFAULT_THEME].isChecked()
+    assert qapp.property("oldschoolpdfTheme") == DEFAULT_THEME
+    assert qapp.property("oldschoolpdfStyle").lower() == "windows"
+    assert qapp.palette().window().color().name() == CLASSIC["face"]
+    assert qapp.palette().highlight().color().name() == CLASSIC["selection"]
+    assert window.settings.load_preferences().theme == DEFAULT_THEME
 
 
 def test_close_reopen_restores_geometry_docks_and_toolbar_visibility(window, qtbot):
@@ -98,7 +100,7 @@ def test_close_reopen_restores_geometry_docks_and_toolbar_visibility(window, qtb
     window.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, window.properties_dock)
     window.navigation_dock.hide()
     window.toolbars[1].hide()
-    window.change_theme("Graphite Pro")
+    window.text_action.trigger()
     original_size = window.size()
     assert window.close()
     fresh = create_window(path)
@@ -110,7 +112,7 @@ def test_close_reopen_restores_geometry_docks_and_toolbar_visibility(window, qtb
     assert fresh.dockWidgetArea(fresh.properties_dock) == Qt.DockWidgetArea.LeftDockWidgetArea
     assert fresh.navigation_dock.isHidden()
     assert fresh.toolbars[1].isHidden()
-    assert fresh.preferences.theme == "Graphite Pro"
+    assert fresh.preferences.text_under_icons
 
 
 def test_opt_out_of_layout_restore_and_reset_layout_are_real(window, qtbot):

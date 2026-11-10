@@ -1,4 +1,4 @@
-# Plano de testes do DocForge
+# Plano de testes do Old School PDF
 
 ## Automação
 
@@ -41,7 +41,7 @@ Testes adicionais cobrem cancelamento durante conversão, colisão de pasta de
 saída, TIFF multipágina, ordem e dimensões das imagens, PNG/JPEG, TXT UTF-8,
 extração de imagens compartilhadas, otimização estrutural e redução de imagens,
 mesclagem e divisão em lote e confirmação de risco de assinatura. A suíte usa
-`DOCFORGE_TEST_TESSDATA` para os dois casos com reconhecimento real.
+`OLDSCHOOLPDF_TEST_TESSDATA` para os dois casos com reconhecimento real.
 
 | Caso | Fluxo observado em M5 |
 |---|---|
@@ -79,7 +79,7 @@ limpeza das marcas ao mudar de revisão e disponibilidade sem `signing`.
 ## Verificação visual e de execução
 
 1. Iniciar a janela no Windows com preferências de teste separadas.
-2. Conferir Classic Light e Graphite Pro, texto, contraste, organização e menus.
+2. Conferir o tema Clássico 2000: relevo, texto, contraste, organização e menus.
 3. Abrir um PDF de referência e conferir a página, as miniaturas e as propriedades.
 4. Ocultar/mover painel, fechar e reiniciar; conferir persistência.
 5. Buscar texto, navegar por ocorrência, girar a visualização e fechar a aba.

@@ -9,6 +9,7 @@ from PySide6.QtGui import QKeySequence
 
 from oldschoolpdf.application.preferences import (
     DEFAULT_SHORTCUTS,
+    DEFAULT_THEME,
     EDITOR_SHORTCUTS,
     THEME_NAMES,
     VIEWER_SHORTCUTS,
@@ -51,7 +52,7 @@ class SettingsRepository:
             )
             return Preferences()
         try:
-            theme = settings.value("preferences/theme", "Classic Light", type=str)
+            theme = settings.value("preferences/theme", DEFAULT_THEME, type=str)
             size = settings.value("preferences/icon_size", 24, type=int)
             under = settings.value("preferences/text_under_icons", False, type=bool)
             restore = settings.value("preferences/restore_layout", True, type=bool)
@@ -66,7 +67,10 @@ class SettingsRepository:
                 raise ValueError("Atalhos inválidos")
             if settings.status() != QSettings.Status.NoError:
                 raise ValueError("Formato INI inválido")
-            if theme not in THEME_NAMES or size not in (20, 24, 32):
+            if theme not in THEME_NAMES:
+                # Temas antigos ou removidos voltam ao padrão sem descartar o resto.
+                theme = DEFAULT_THEME
+            if size not in (20, 24, 32):
                 raise ValueError("Preferências desconhecidas")
             if not 16 <= cache_mib <= 256 or not 1 <= parallelism <= 4:
                 raise ValueError("Limites do visualizador inválidos")

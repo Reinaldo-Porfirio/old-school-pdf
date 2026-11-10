@@ -3,7 +3,7 @@ from dataclasses import replace
 import pytest
 from PySide6.QtCore import QByteArray, QSettings
 
-from oldschoolpdf.application.preferences import Preferences
+from oldschoolpdf.application.preferences import DEFAULT_THEME, Preferences
 from oldschoolpdf.domain.errors import SettingsError
 from oldschoolpdf.infrastructure.settings_repository import (
     SETTINGS_ID,
@@ -14,7 +14,7 @@ from oldschoolpdf.infrastructure.settings_repository import (
 
 def test_preferences_and_binary_layout_survive_new_repository(tmp_path):
     path = tmp_path / "pasta com espaços 漢字" / "config.ini"
-    prefs = replace(Preferences(), theme="Graphite Pro", icon_size=32, text_under_icons=True)
+    prefs = replace(Preferences(), theme=DEFAULT_THEME, icon_size=32, text_under_icons=True)
     layout = WindowLayout(QByteArray(b"geometry\x00\xff"), QByteArray(b"state\x00\x80"))
     SettingsRepository(path).save(prefs, layout)
     fresh = SettingsRepository(path)
@@ -32,7 +32,6 @@ def test_first_start_has_defaults_and_does_not_create_a_file_on_read(tmp_path):
 @pytest.mark.parametrize(
     "key,value",
     [
-        ("preferences/theme", "unknown-theme"),
         ("preferences/icon_size", "invalid-number"),
         ("preferences/shortcuts", "{not json}"),
         ("preferences/shortcuts", '["wrong-type"]'),
@@ -50,6 +49,21 @@ def test_bad_preferences_are_reported_with_safe_defaults(tmp_path, key, value):
     repo = SettingsRepository(path)
     assert repo.load_preferences() == Preferences()
     assert repo.warnings
+
+
+@pytest.mark.parametrize("theme", ["Classic Light", "Graphite Pro", "unknown-theme"])
+def test_removed_or_unknown_theme_falls_back_without_losing_other_preferences(tmp_path, theme):
+    path = tmp_path / "old-theme.ini"
+    settings = QSettings(str(path), QSettings.Format.IniFormat)
+    settings.setValue("application/id", SETTINGS_ID)
+    settings.setValue("preferences/theme", theme)
+    settings.setValue("preferences/icon_size", 32)
+    settings.sync()
+    repo = SettingsRepository(path)
+    loaded = repo.load_preferences()
+    assert loaded.theme == DEFAULT_THEME
+    assert loaded.icon_size == 32
+    assert not repo.warnings
 
 
 @pytest.mark.parametrize("version", ["invalid", 999, 0])

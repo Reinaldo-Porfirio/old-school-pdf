@@ -1,65 +1,61 @@
-"""Paletas completas, estilo Fusion e foco visível para dois temas desktop."""
+"""Tema Clássico 2000: estilo nativo "Windows" do Qt, paleta cinza e relevo 3D."""
 
-from PySide6.QtGui import QColor, QPalette
+from PySide6.QtGui import QColor, QFont, QPalette
 from PySide6.QtWidgets import QApplication
 
 from oldschoolpdf.application.preferences import THEME_NAMES
 
-COLORS = {
-    "Classic Light": {
-        "window": "#edf1f6",
-        "base": "#ffffff",
-        "alternate": "#f1f5fa",
-        "text": "#17283d",
-        "muted": "#4d5e73",
-        "button": "#e6ecf4",
-        "accent": "#185a9d",
-        "header": "#174c80",
-        "border": "#b8c7d8",
-        "disabled": "#657184",
-        "canvas": "#d5dfe9",
-        "hover": "#d7e8fa",
-    },
-    "Graphite Pro": {
-        "window": "#252b34",
-        "base": "#1b2028",
-        "alternate": "#252d38",
-        "text": "#edf2f8",
-        "muted": "#bbc9da",
-        "button": "#343e4d",
-        "accent": "#397ec4",
-        "header": "#293e59",
-        "border": "#526177",
-        "disabled": "#a1afc0",
-        "canvas": "#151a21",
-        "hover": "#394e68",
-    },
+# Cores do sistema no visual clássico do Windows 2000.
+CLASSIC = {
+    "face": "#d4d0c8",
+    "highlight_3d": "#ffffff",
+    "light_3d": "#e4e1da",
+    "mid": "#b0aca4",
+    "shadow": "#808080",
+    "dark_shadow": "#404040",
+    "base": "#ffffff",
+    "alternate": "#f4f3ee",
+    "text": "#000000",
+    "disabled": "#808080",
+    "selection": "#0a246a",
+    "caption_start": "#0a246a",
+    "caption_end": "#a6caf0",
+    "inactive_start": "#808080",
+    "inactive_end": "#c0c0c0",
+    "tooltip": "#ffffe1",
+    "link": "#0000ee",
+    "canvas": "#808080",
 }
 
+STYLE_NAME = "Windows"
+FONT_FAMILY = "Tahoma"
+FONT_POINTS = 8
 
-def apply_theme(app: QApplication, name: str) -> None:
-    if name not in THEME_NAMES:
-        raise ValueError("Tema desconhecido.")
-    c = COLORS[name]
-    app.setStyle("Fusion")
+
+def classic_palette() -> QPalette:
+    c = CLASSIC
     palette = QPalette()
     roles = {
-        QPalette.ColorRole.Window: c["window"],
+        QPalette.ColorRole.Window: c["face"],
         QPalette.ColorRole.WindowText: c["text"],
         QPalette.ColorRole.Base: c["base"],
         QPalette.ColorRole.AlternateBase: c["alternate"],
         QPalette.ColorRole.Text: c["text"],
-        QPalette.ColorRole.Button: c["button"],
+        QPalette.ColorRole.Button: c["face"],
         QPalette.ColorRole.ButtonText: c["text"],
-        QPalette.ColorRole.Highlight: c["accent"],
+        QPalette.ColorRole.BrightText: "#ffffff",
+        QPalette.ColorRole.Highlight: c["selection"],
         QPalette.ColorRole.HighlightedText: "#ffffff",
-        QPalette.ColorRole.ToolTipBase: c["base"],
+        QPalette.ColorRole.ToolTipBase: c["tooltip"],
         QPalette.ColorRole.ToolTipText: c["text"],
-        QPalette.ColorRole.Link: "#2376c4" if name == "Classic Light" else "#9ccaff",
-        QPalette.ColorRole.PlaceholderText: c["muted"],
-        QPalette.ColorRole.Light: c["border"],
-        QPalette.ColorRole.Mid: c["border"],
-        QPalette.ColorRole.Dark: c["canvas"],
+        QPalette.ColorRole.Link: c["link"],
+        QPalette.ColorRole.LinkVisited: "#551a8b",
+        QPalette.ColorRole.PlaceholderText: c["disabled"],
+        QPalette.ColorRole.Light: c["highlight_3d"],
+        QPalette.ColorRole.Midlight: c["light_3d"],
+        QPalette.ColorRole.Mid: c["mid"],
+        QPalette.ColorRole.Dark: c["shadow"],
+        QPalette.ColorRole.Shadow: c["dark_shadow"],
     }
     for role, color in roles.items():
         palette.setColor(role, QColor(color))
@@ -68,46 +64,42 @@ def apply_theme(app: QApplication, name: str) -> None:
         QPalette.ColorRole.WindowText,
         QPalette.ColorRole.ButtonText,
     ):
+        # O estilo Windows desenha o texto desabilitado em baixo-relevo com a cor Light.
         palette.setColor(QPalette.ColorGroup.Disabled, role, QColor(c["disabled"]))
-    app.setPalette(palette)
-    app.setStyleSheet(f"""
-        QMainWindow {{ background: {c["canvas"]}; }}
-        QGraphicsView#pdf_canvas {{ background: {c["canvas"]}; border: 1px solid {c["border"]}; }}
-        QMenuBar {{ background: {c["header"]}; color: white; padding: 3px; }}
-        QMenuBar::item {{ padding: 5px 10px; }}
-        QMenuBar::item:selected {{ background: {c["accent"]}; }}
-        QMenu {{ border: 1px solid {c["border"]}; padding: 4px; }}
-        QMenu::item {{ padding: 6px 28px 6px 12px; }}
-        QMenu::item:selected {{ background: {c["accent"]}; color: white; }}
-        QToolBar {{ border: 1px solid {c["border"]}; spacing: 4px; padding: 4px; }}
-        QToolButton {{ padding: 5px; border: 1px solid transparent; border-radius: 2px; }}
-        QToolButton:hover {{ background: {c["hover"]}; border-color: {c["border"]}; }}
-        QToolButton:checked {{ background: {c["hover"]}; border-color: {c["accent"]}; }}
-        QDockWidget::title {{ background: {c["header"]}; color: white; padding: 7px; }}
-        QDockWidget {{ font-weight: 600; color: white; }}
-        QTabWidget::pane {{ border: 1px solid {c["border"]}; }}
-        QTabBar::tab {{ padding: 7px 12px; background: {c["button"]};
-                       border: 1px solid {c["border"]}; }}
-        QTabBar::tab:selected {{ background: {c["base"]}; border-bottom: 2px solid {c["accent"]}; }}
-        QHeaderView::section {{ background: {c["button"]}; padding: 6px;
-                               border: 1px solid {c["border"]}; font-weight: 600; }}
-        QTreeWidget, QTextBrowser {{ background: {c["base"]}; }}
-        QTreeWidget::item {{ padding: 4px; }}
-        QGroupBox {{ border: 1px solid {c["border"]}; margin-top: 12px;
-                     padding: 12px 8px 8px; font-weight: 600; }}
-        QGroupBox::title {{ subcontrol-origin: margin; left: 10px; padding: 0 4px; }}
-        QPushButton {{ padding: 6px 12px; min-height: 20px; }}
-        QPushButton:default {{ border: 2px solid {c["accent"]}; }}
-        QPushButton:focus, QToolButton:focus, QComboBox:focus, QKeySequenceEdit:focus,
-        QTabBar:focus, QTreeWidget:focus {{ border: 2px solid {c["accent"]}; }}
-        QComboBox {{ padding: 4px; min-height: 22px; }}
-        QStatusBar {{ background: {c["window"]}; border-top: 1px solid {c["border"]}; }}
-        QStatusBar::item {{ border: none; }}
-        QLabel[role='muted'] {{ color: {c["muted"]}; }}
-        QFrame[role='workspaceHeader'] {{ background: {c["header"]}; }}
-        QFrame[role='workspaceHeader'] QLabel {{ color: white; }}
-        QLabel[role='badge'] {{ background: {c["accent"]}; color: white;
-                              padding: 5px 9px; border-radius: 2px; }}
-        QScrollArea {{ border: none; }}
-    """)
+    palette.setColor(
+        QPalette.ColorGroup.Inactive, QPalette.ColorRole.Highlight, QColor(c["selection"])
+    )
+    return palette
+
+
+def classic_stylesheet() -> str:
+    c = CLASSIC
+    caption = (
+        f"qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {c['caption_start']}, "
+        f"stop:1 {c['caption_end']})"
+    )
+    # Só o que o estilo nativo não desenha: títulos de painéis, tela do PDF e etiquetas.
+    return f"""
+        QGraphicsView#pdf_canvas {{ background: {c["canvas"]}; }}
+        QDockWidget {{ font-weight: bold; color: #ffffff; }}
+        QDockWidget::title {{ background: {caption}; padding: 3px 4px; text-align: left; }}
+        QToolTip {{ background: {c["tooltip"]}; color: #000000; border: 1px solid #000000;
+                    padding: 2px; }}
+        QLabel[role='muted'] {{ color: #404040; }}
+        QFrame[role='workspaceHeader'] {{ background: {caption}; }}
+        QFrame[role='workspaceHeader'] QLabel {{ color: #ffffff; background: transparent; }}
+        QLabel[role='badge'] {{ background: {c["selection"]}; color: #ffffff; padding: 2px 7px;
+                               font-weight: bold; }}
+    """
+
+
+def apply_theme(app: QApplication, name: str) -> None:
+    if name not in THEME_NAMES:
+        raise ValueError("Tema desconhecido.")
+    # O estilo "Windows" do Qt é o visual clássico; Fusion fica como reserva.
+    style = app.setStyle(STYLE_NAME) or app.setStyle("Fusion")
+    app.setProperty("oldschoolpdfStyle", style.name() if style else "")
+    app.setFont(QFont(FONT_FAMILY, FONT_POINTS))
+    app.setPalette(classic_palette())
+    app.setStyleSheet(classic_stylesheet())
     app.setProperty("oldschoolpdfTheme", name)

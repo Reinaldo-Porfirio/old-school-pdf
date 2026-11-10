@@ -1,4 +1,4 @@
-"""Smoke Qt nativo em processo separado com INI temporário e imagens dos temas."""
+"""Smoke Qt nativo em processo separado com INI temporário e imagens do tema."""
 
 import json
 import platform
@@ -10,6 +10,7 @@ from PySide6.QtCore import QTimer, QtMsgType, qInstallMessageHandler, qVersion
 from PySide6.QtWidgets import QApplication
 
 from oldschoolpdf.app import configure_application, create_window
+from oldschoolpdf.application.preferences import DEFAULT_THEME
 
 evidence = Path(__file__).resolve().parents[1] / "docs" / "evidence"
 evidence.mkdir(parents=True, exist_ok=True)
@@ -38,7 +39,8 @@ def restored_window():
     try:
         fresh = windows[-1]
         assert fresh.layout_restored
-        assert fresh.preferences.theme == "Graphite Pro"
+        assert fresh.preferences.theme == DEFAULT_THEME
+        assert fresh.preferences.text_under_icons
         assert fresh.navigation_dock.isHidden()
         assert fresh.tabs.count() == 1
         assert fresh.jobs_dock.tree.topLevelItemCount() == 0
@@ -48,9 +50,9 @@ def restored_window():
     app.quit()
 
 
-def graphite():
+def text_under_icons():
     try:
-        assert first.grab().save(str(evidence / "graphite-pro.png"))
+        assert first.grab().save(str(evidence / "classico-2000-texto.png"))
         first.navigation_dock.hide()
         assert first.close()
         fresh = create_window(settings_path)
@@ -65,13 +67,13 @@ def graphite():
 def classic():
     try:
         assert first.isVisible()
-        assert app.property("oldschoolpdfTheme") == "Classic Light"
-        assert first.grab().save(str(evidence / "classic-light.png"))
+        assert app.property("oldschoolpdfTheme") == DEFAULT_THEME
+        assert first.grab().save(str(evidence / "classico-2000.png"))
         first.open_page("guide")
         first.open_page("capabilities")
         first.open_page("home")
-        first.change_theme("Graphite Pro")
-        QTimer.singleShot(300, graphite)
+        first.text_action.trigger()
+        QTimer.singleShot(300, text_under_icons)
     except Exception as error:
         failures.append(repr(error))
         app.quit()

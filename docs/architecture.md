@@ -1,6 +1,6 @@
-# Arquitetura do DocForge até M5
+# Arquitetura do Old School PDF até M5
 
-DocForge usa Python e Qt Widgets para a interface desktop. Cada documento
+Old School PDF usa Python e Qt Widgets para a interface desktop. Cada documento
 aberto tem um processo local de leitura e edição, gerenciado pela aplicação.
 
 ```mermaid

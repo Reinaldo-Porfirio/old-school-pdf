@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 )
 
 from oldschoolpdf.application.capability_service import CapabilitiesService
-from oldschoolpdf.ui.icons import command_icon
+from oldschoolpdf.ui.icons import app_icon, command_icon
 
 GUIDE_HTML = """
 <h1>Guia do Old School PDF</h1>
@@ -86,7 +86,7 @@ Use Exibir → Painéis para mostrar ou ocultar cada um. As barras de ferramenta
 também podem ser movidas e ocultadas. O menu de contexto das barras reúne essas opções.
 Exibir → Restaurar organização padrão recupera a disposição original.</p>
 <h2>Aparência e preferências</h2>
-<p>Exibir → Tema alterna Classic Light e Graphite Pro em tempo real.
+<p>O visual Clássico 2000 usa relevo 3D, ícones coloridos e painéis com barra de título.
 Ferramentas → Preferências configura tamanho dos ícones, texto sob os ícones,
 restauração do layout, cache de páginas e atalhos. Tema e layout são gravados localmente ao
 alterar preferências ou fechar o programa. Se a gravação falhar, o aplicativo avisa.</p>
@@ -137,7 +137,7 @@ class HomePage(QScrollArea):
         banner.setProperty("role", "workspaceHeader")
         banner_layout = QHBoxLayout(banner)
         symbol = QLabel()
-        symbol.setPixmap(command_icon("document", "#94c7ff").pixmap(48, 48))
+        symbol.setPixmap(app_icon().pixmap(48, 48))
         banner_layout.addWidget(symbol)
         titles = QVBoxLayout()
         titles.addWidget(section_label(self.tr("Old School PDF"), 20))
@@ -146,7 +146,7 @@ class HomePage(QScrollArea):
         titles.addWidget(subtitle)
         banner_layout.addLayout(titles, 1)
         layout.addWidget(banner)
-        badge = QLabel(self.tr("M5  /  SEGURANÇA E ASSINATURAS LOCAIS"))
+        badge = QLabel(self.tr("GRÁTIS PARA SEMPRE  ·  SEM ASSINATURA  ·  100% LOCAL"))
         badge.setProperty("role", "badge")
         badge.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(badge, 0, Qt.AlignmentFlag.AlignLeft)
@@ -184,8 +184,9 @@ class HomePage(QScrollArea):
             ("M2", "Organização de páginas e exportação", "Concluído"),
             ("M3", "Anotações e formulários", "Concluído"),
             ("M4", "OCR, conversão e lotes", "Concluído"),
-            ("M5", "Segurança e assinaturas locais", "Versão atual"),
-            ("M6", "Distribuição e documentação", "Futuro"),
+            ("M5", "Segurança e assinaturas locais", "Concluído"),
+            ("M6", "Visual Clássico 2000 e novo nome", "Versão atual"),
+            ("M7", "Instalador e distribuição", "Futuro"),
         ):
             QTreeWidgetItem(roadmap, row)
         roadmap.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)

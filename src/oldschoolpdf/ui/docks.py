@@ -365,7 +365,7 @@ class PropertiesDock(QDockWidget):
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.fields[key] = label
             form.addRow(title, label)
-        form.addRow(self.tr("Aplicativo:"), QLabel(f"{__version__} · M5"))
+        form.addRow(self.tr("Aplicativo:"), QLabel(__version__))
         form.addRow(self.tr("Modo:"), QLabel(self.tr("Local / Offline")))
         tabs.addTab(properties, self.tr("Propriedades"))
         self.editor = EditorPane(actions)

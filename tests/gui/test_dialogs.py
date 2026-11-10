@@ -1,7 +1,7 @@
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QDialog, QMessageBox
 
-from oldschoolpdf.application.preferences import Preferences
+from oldschoolpdf.application.preferences import DEFAULT_THEME, Preferences
 from oldschoolpdf.domain.errors import SettingsError
 from oldschoolpdf.ui.dialogs import PreferencesDialog
 
@@ -9,11 +9,11 @@ from oldschoolpdf.ui.dialogs import PreferencesDialog
 def test_preferences_accept_and_cancel_are_distinct(window, qtbot):
     dialog = PreferencesDialog(window.preferences, str(window.settings.path), window)
     qtbot.addWidget(dialog)
-    dialog.theme_combo.setCurrentText("Graphite Pro")
+    dialog.text_under.setChecked(True)
     dialog.accept()
     assert dialog.result() == QDialog.DialogCode.Accepted
-    assert dialog.preferences().theme == "Graphite Pro"
-    assert window.preferences.theme == "Classic Light"
+    assert dialog.preferences().text_under_icons
+    assert not window.preferences.text_under_icons
     rejected = PreferencesDialog(window.preferences, str(window.settings.path), window)
     qtbot.addWidget(rejected)
     rejected.reject()
@@ -36,18 +36,18 @@ def test_duplicate_shortcuts_prevent_acceptance(window, qtbot, monkeypatch):
 
 def test_preferences_action_commits_only_accepted_dialog(window, monkeypatch):
     def accept(dialog):
-        dialog.theme_combo.setCurrentText("Graphite Pro")
+        dialog.text_under.setChecked(True)
         return QDialog.DialogCode.Accepted
 
     with monkeypatch.context() as patch:
         patch.setattr(PreferencesDialog, "exec", accept)
         window.actions["preferences"].trigger()
-    assert window.preferences.theme == "Graphite Pro"
-    assert window.settings.load_preferences().theme == "Graphite Pro"
+    assert window.preferences.text_under_icons
+    assert window.settings.load_preferences().text_under_icons
     with monkeypatch.context() as patch:
         patch.setattr(PreferencesDialog, "exec", lambda dialog: QDialog.DialogCode.Rejected)
         window.show_preferences()
-    assert window.preferences.theme == "Graphite Pro"
+    assert window.preferences.text_under_icons
 
 
 def test_save_error_is_shown_and_close_can_be_cancelled(window, monkeypatch):
@@ -58,7 +58,7 @@ def test_save_error_is_shown_and_close_can_be_cancelled(window, monkeypatch):
     with monkeypatch.context() as patch:
         patch.setattr(window.settings, "save", fail)
         patch.setattr(QMessageBox, "warning", lambda *args: warnings.append(args))
-        window.change_theme("Graphite Pro")
+        window.change_theme(DEFAULT_THEME)
         assert warnings
         patch.setattr(QMessageBox, "exec", lambda dialog: QMessageBox.StandardButton.Cancel)
         assert not window.close()

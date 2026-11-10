@@ -34,12 +34,13 @@ DEFAULT_SHORTCUTS = {
     **VIEWER_SHORTCUTS,
     **EDITOR_SHORTCUTS,
 }
-THEME_NAMES = ("Classic Light", "Graphite Pro")
+DEFAULT_THEME = "Clássico 2000"
+THEME_NAMES = (DEFAULT_THEME,)
 
 
 @dataclass(frozen=True, slots=True)
 class Preferences:
-    theme: str = "Classic Light"
+    theme: str = DEFAULT_THEME
     icon_size: int = 24
     text_under_icons: bool = False
     restore_layout: bool = True

@@ -1,6 +1,6 @@
-# Guia do DocForge Ultimate
+# Guia do Old School PDF
 
-Abra o DocForge com `python -m docforge`. Pressione **Ctrl+O**, use
+Abra o Old School PDF com `python -m oldschoolpdf`. Pressione **Ctrl+O**, use
 **Arquivo > Abrir PDF** ou solte arquivos locais na janela. A abertura mostra
 o progresso na aba e na fila. PDFs protegidos pedem a senha na aba e permitem
 nova tentativa. Fechar a aba cancela a abertura.
@@ -131,11 +131,11 @@ aceita PDFs íntegros, sem criptografia e sem assinaturas anteriores.
 raízes X.509 locais `.pem`, `.crt`, `.cer` ou `.der`. A confiança depende
 dessas raízes. O relatório separa integridade, criptografia e cobertura
 do arquivo. A verificação offline usa as evidências de revogação disponíveis
-no documento. O DocForge não consulta serviços de revogação ou carimbo de tempo.
+no documento. O Old School PDF não consulta serviços de revogação ou carimbo de tempo.
 
 ## Organizar o espaço de leitura
 
-**Exibir > Tema** alterna Classic Light e Graphite Pro. Arraste o título de um
+O visual é o **Clássico 2000**, em **Exibir > Tema**. Arraste o título de um
 painel para movê-lo. **Exibir > Painéis** controla a visibilidade e **Restaurar
 organização padrão** recupera o arranjo inicial.
 

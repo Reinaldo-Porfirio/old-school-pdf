@@ -1,4 +1,4 @@
-# DocForge Ultimate — Especificação de Produto e Engenharia (v1.0)
+# Old School PDF — Especificação de Produto e Engenharia (v1.0)
 
 **Estado:** especificação proposta, nenhum recurso declarado como implementado.  
 **Data:** 03/11/2026  
@@ -99,7 +99,7 @@
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
-│ DocForge Ultimate — Contrato.pdf *                                       _ □ X      │
+│ Old School PDF — Contrato.pdf *                                       _ □ X      │
 ├──────────────────────────────────────────────────────────────────────────────────────┤
 │ Arquivo  Editar  Exibir  Documento  Ferramentas  OCR  Segurança  Janela  Ajuda       │
 ├──────────────────────────────────────────────────────────────────────────────────────┤
@@ -125,7 +125,7 @@
 ### 3.2 Regras de UI
 
 - **QMainWindow + QDockWidget + QTabWidget**, com painéis redimensionáveis e disposição lembrada.
-- Dois estilos: **Classic Light** (claro, barras azuis) e **Graphite Pro** (escuro, alto contraste). Ícones nítidos e coloridos onde agregam significado.
+- Estilo **Clássico 2000** (desde a 0.6.0): cinza com relevo 3D, títulos em degradê azul-marinho e ícones coloridos. Os temas Classic Light e Graphite Pro existiram até a 0.5.0.
 - Menus completos sempre acessíveis; barras de ferramentas configuráveis, opção de texto sob ícones e atalhos visíveis nos menus.
 - Painéis: miniaturas/índice à esquerda, propriedades/formatos à direita, fila de tarefas na parte inferior.
 - Múltiplas abas e documentos, área central principal com rolagem e zoom.
@@ -176,7 +176,7 @@
 | Testes | pytest, pytest-qt e testes de arquivos reais gerados | Cobertura unitária, UI, regressão e integração |
 | Empacotamento | PyInstaller + Inno Setup, sujeito à validação | Distribuição Windows e licença dos componentes |
 
-**Nota decisiva sobre licença:** PyMuPDF é disponibilizado sob **AGPLv3 ou licença comercial**. Para que o DocForge permaneça grátis e sem licença comercial, assumir desde o início que o projeto será publicado como software livre compatível com AGPL, com código-fonte correspondente e avisos de licença. PySide6 tem modalidades LGPL/GPL/comercial; pikepdf e OCRmyPDF usam MPL-2.0; Tesseract usa Apache-2.0. Validar módulos, versões, artefatos distribuídos e licenças de terceiros no processo de empacotamento. Consulte fontes ao final. **Não interpretar a licença sem revisão jurídica caso haja redistribuição formal.**
+**Nota decisiva sobre licença:** PyMuPDF é disponibilizado sob **AGPLv3 ou licença comercial**. Para que o Old School PDF permaneça grátis e sem licença comercial, assumir desde o início que o projeto será publicado como software livre compatível com AGPL, com código-fonte correspondente e avisos de licença. PySide6 tem modalidades LGPL/GPL/comercial; pikepdf e OCRmyPDF usam MPL-2.0; Tesseract usa Apache-2.0. Validar módulos, versões, artefatos distribuídos e licenças de terceiros no processo de empacotamento. Consulte fontes ao final. **Não interpretar a licença sem revisão jurídica caso haja redistribuição formal.**
 
 ### 4.2 Componentes e fluxo
 
@@ -255,7 +255,7 @@
 ### 4.6 Estrutura de pastas sugerida
 
 ```text
-docforge/
+oldschoolpdf/
   pyproject.toml
   README.md
   LICENSE
@@ -266,7 +266,7 @@ docforge/
     test_plan.md
     user_guide.md
     decisions/
-  src/docforge/
+  src/oldschoolpdf/
     __init__.py
     __main__.py
     app.py
@@ -326,14 +326,14 @@ docforge/
 
 ## 5. Licença, direitos e dependências
 
-1. **Decisão proposta:** DocForge publicado sob `AGPL-3.0-or-later` (revisar compatibilidade exata com dependências e outras licenças antes da publicação). Documentar PyMuPDF e avisos necessários. O objetivo é permitir uso gratuito, revisão do código e distribuição conforme licença.
+1. **Decisão proposta:** Old School PDF publicado sob `AGPL-3.0-or-later` (revisar compatibilidade exata com dependências e outras licenças antes da publicação). Documentar PyMuPDF e avisos necessários. O objetivo é permitir uso gratuito, revisão do código e distribuição conforme licença.
 2. Nenhuma dependência deve exigir aquisição de licença comercial para a distribuição planejada. Recursos incompatíveis devem ser substituídos, opcionalizados ou adiados.
 3. Não usar bibliotecas de origem desconhecida nem copiar ícones/assets de software proprietário.
 4. Incluir `LICENSE`, `THIRD_PARTY_NOTICES.md`, fontes dos ícones, versões e licenças dos binários empacotados.
 5. Não incluir motores de OCR, modelos ou codecs sem verificar licenças e direitos de redistribuição.
 6. Conversão LibreOffice executada como programa externo opcional, com verificação de versão e executável; documentação explica possíveis diferenças de formatação.
 7. Não sugerir que dados sensíveis foram destruídos porque um retângulo preto foi desenhado por cima.
-8. Antes de divulgação pública, pesquisar disponibilidade do nome e possíveis marcas registradas "DocForge".
+8. Antes de divulgação pública, pesquisar disponibilidade do nome e possíveis marcas registradas "Old School PDF".
 
 Fontes técnicas e de licença a conferir durante a implementação:
 
@@ -435,7 +435,7 @@ Entrada pode conter PDFs malformados, com fontes defeituosas, objetos enormes, p
 - [ ] Configurar CI para testes headless de lógica e UI, sem anunciar funcionalidades não implementadas.
 - [ ] Primeiro projeto demonstrável e arquitetura documentada.
 
-**Aceitação M0:** inicia com `python -m docforge`; layout persiste; sem erros no console; testes de janela e configurações passam.
+**Aceitação M0:** inicia com `python -m oldschoolpdf`; layout persiste; sem erros no console; testes de janela e configurações passam.
 
 ### M1 — Visualizador real (primeiro protótipo útil)
 
@@ -557,7 +557,7 @@ Uma tarefa só está pronta se:
 **Tarefa imediata: M0, somente M0.** Ao fim, esperamos:
 
 - Janela principal real em português-BR, com barra de menus, barras de ferramentas, dock de miniaturas, dock de propriedades, abas, fila de tarefas e barra de status.
-- Temas Classic Light e Graphite Pro, sem minimalismo exagerado.
+- Tema Clássico 2000, sem minimalismo.
 - Persistência local das configurações de geometria, dock layout e tema.
 - Contratos de serviço, registro de capacidades e classes de domínio iniciais.
 - Testes automatizados que abrem a aplicação e validam estado/persistência.
