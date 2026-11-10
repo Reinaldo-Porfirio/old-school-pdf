@@ -2,7 +2,7 @@
 
 > Grátis para sempre. Sem assinatura, sem cadastro, sem nuvem. Você baixa e é seu.
 
-![Old School PDF com o visual Clássico 2000](docs/evidence/classico-2000-pdf.png)
+![Old School PDF com o visual Clássico 2000](docs/screenshots/classico-2000-pdf.png)
 
 Aplicativo desktop livre para ler, organizar e editar PDFs locais. Abra documentos
 em abas, mescle e reorganize páginas, adicione anotações, preencha campos AcroForm
@@ -16,7 +16,7 @@ degradê, ícones coloridos, menus completos, atalhos configuráveis e painéis
 reorganizáveis. Nada de minimalismo.
 
 O projeto se chamava **DocForge Ultimate** até a versão 0.5.0. Os registros
-históricos em `docs/decisions` e `docs/test_report.md` mantêm o nome antigo.
+históricos em `docs/decisions` mantêm o nome antigo.
 
 ## Instalar no Windows
 
@@ -33,8 +33,7 @@ associações. As preferências ficam em `%LOCALAPPDATA%\Old School PDF`.
 ## Executar a partir do código-fonte
 
 Requer Windows x64 e Python >=3.12,<3.15. O ambiente de teste foi Windows 11
-com Python 3.13.15. A instalação inclui o motor PyMuPDF 2.1. Consulte o
-[relatório de testes](docs/test_report.md).
+com Python 3.13.15. A instalação inclui o motor PyMuPDF 2.1.
 
 Com [uv](https://docs.astral.sh/uv/), na pasta do projeto:
 
@@ -169,7 +168,7 @@ Use `--sem-instalador` para parar no executável.
 - `packaging/`: lançador, especificação do PyInstaller, script do instalador e build.
 - [Conceitos visuais](docs/concepts/README.md) que deram origem ao tema Clássico 2000.
 - [Arquitetura](docs/architecture.md), [decisões do M5](docs/decisions/0005-m5-security.md),
-  [plano de teste](docs/test_plan.md), [relatório real](docs/test_report.md),
+  [plano de teste](docs/test_plan.md),
   [guia offline](docs/user_guide.md), [especificação integral](docs/product_spec.md).
 
 Código sob **AGPL-3.0-or-later**, com PyMuPDF pela opção AGPLv3.

@@ -12,7 +12,8 @@ from PySide6.QtWidgets import QApplication
 from oldschoolpdf.app import configure_application, create_window
 from oldschoolpdf.application.preferences import DEFAULT_THEME
 
-evidence = Path(__file__).resolve().parents[1] / "docs" / "evidence"
+# Saída fora do Git: as capturas e o JSON registram dados da máquina local.
+evidence = Path(__file__).resolve().parents[1] / "build" / "smoke"
 evidence.mkdir(parents=True, exist_ok=True)
 messages = []
 failures = []

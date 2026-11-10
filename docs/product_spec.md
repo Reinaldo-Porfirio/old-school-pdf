@@ -416,7 +416,7 @@ Entrada pode conter PDFs malformados, com fontes defeituosas, objetos enormes, p
 ### 7.3 Critérios para considerar um marco concluído
 
 - Código executável localmente, com instruções reproduzíveis.
-- Testes do marco passando; resultados reais anexados em `docs/test_report.md`.
+- Testes do marco passando; resultados reais registrados na CI.
 - Teste manual de fluxo completo realizado; declarar explicitamente passos que dependem do usuário ou de ambiente Windows e não foram testados.
 - Nenhuma função anunciada deve ser um mock ou botão inerte.
 - Registros de erro e tratamento dos casos de falha relevantes.
@@ -562,7 +562,7 @@ Uma tarefa só está pronta se:
 - Contratos de serviço, registro de capacidades e classes de domínio iniciais.
 - Testes automatizados que abrem a aplicação e validam estado/persistência.
 - `README.md` com requisitos, instalação local, execução e testes.
-- `docs/test_report.md` com comandos executados e resultado.
+- Resultado dos testes visível na CI do repositório.
 - Nada de botões fingindo que os recursos PDF já existem. Módulos futuros ficam indisponíveis com explicação clara.
 
 **Em seguida:** M1 (renderização e busca reais), M2 (operações de páginas) e assim sucessivamente, mediante confirmação do usuário.
