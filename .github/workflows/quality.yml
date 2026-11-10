@@ -1,4 +1,4 @@
-name: DocForge quality
+name: Old School PDF quality
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read

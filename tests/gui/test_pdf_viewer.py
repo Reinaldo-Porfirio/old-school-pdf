@@ -8,7 +8,7 @@ from PySide6.QtCore import QMimeData, QPointF, QProcess, Qt, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices, QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import QApplication, QFileDialog, QLineEdit
 
-from docforge.domain.tasks import TaskState
+from oldschoolpdf.domain.tasks import TaskState
 
 
 @pytest.fixture
@@ -308,7 +308,7 @@ def test_viewer_preferences_migrate_and_preserve_m0_shortcut(window):
 
 def test_worker_process_never_loads_layout_runtime():
     code = (
-        "import sys; from docforge.infrastructure.pdf_engine import PdfEngine; "
+        "import sys; from oldschoolpdf.infrastructure.pdf_engine import PdfEngine; "
         "PdfEngine(); assert 'onnxruntime' not in sys.modules"
     )
     result = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, timeout=12)

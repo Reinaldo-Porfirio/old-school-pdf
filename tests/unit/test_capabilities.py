@@ -1,9 +1,9 @@
 import socket
 import subprocess
 
-from docforge.application.capability_service import CapabilitiesService
-from docforge.domain.security import SIGNING_VERSION
-from docforge.infrastructure.dependency_probe import LocalDependencyProbe
+from oldschoolpdf.application.capability_service import CapabilitiesService
+from oldschoolpdf.domain.security import SIGNING_VERSION
+from oldschoolpdf.infrastructure.dependency_probe import LocalDependencyProbe
 
 
 class Probe:

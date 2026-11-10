@@ -3,9 +3,9 @@ from dataclasses import replace
 import pytest
 from PySide6.QtCore import QByteArray, QSettings
 
-from docforge.application.preferences import Preferences
-from docforge.domain.errors import SettingsError
-from docforge.infrastructure.settings_repository import (
+from oldschoolpdf.application.preferences import Preferences
+from oldschoolpdf.domain.errors import SettingsError
+from oldschoolpdf.infrastructure.settings_repository import (
     SETTINGS_ID,
     SettingsRepository,
     WindowLayout,

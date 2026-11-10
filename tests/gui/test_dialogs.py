@@ -1,9 +1,9 @@
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QDialog, QMessageBox
 
-from docforge.application.preferences import Preferences
-from docforge.domain.errors import SettingsError
-from docforge.ui.dialogs import PreferencesDialog
+from oldschoolpdf.application.preferences import Preferences
+from oldschoolpdf.domain.errors import SettingsError
+from oldschoolpdf.ui.dialogs import PreferencesDialog
 
 
 def test_preferences_accept_and_cancel_are_distinct(window, qtbot):

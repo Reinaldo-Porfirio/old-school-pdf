@@ -5,8 +5,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QDockWidget, QLabel, QMainWindow, QTabWidget, QToolBar
 
-from docforge.app import create_window
-from docforge.ui.main_window import FUTURE_COMMANDS
+from oldschoolpdf.app import create_window
+from oldschoolpdf.ui.main_window import FUTURE_COMMANDS
 
 
 def test_real_window_has_classic_widgets_and_portuguese_menus(window):
@@ -80,11 +80,11 @@ def test_keyboard_shortcuts_work_with_toolbars_hidden(window, qtbot):
 def test_themes_change_immediately_and_persist(window, qapp):
     before = qapp.palette().window().color().name()
     window.theme_actions["Graphite Pro"].trigger()
-    assert qapp.property("docforgeTheme") == "Graphite Pro"
+    assert qapp.property("oldschoolpdfTheme") == "Graphite Pro"
     assert qapp.palette().window().color().name() != before
     assert window.settings.load_preferences().theme == "Graphite Pro"
     window.theme_actions["Classic Light"].trigger()
-    assert qapp.property("docforgeTheme") == "Classic Light"
+    assert qapp.property("oldschoolpdfTheme") == "Classic Light"
 
 
 def test_close_reopen_restores_geometry_docks_and_toolbar_visibility(window, qtbot):

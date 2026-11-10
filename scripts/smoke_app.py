@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 from PySide6.QtCore import QTimer, QtMsgType, qInstallMessageHandler, qVersion
 from PySide6.QtWidgets import QApplication
 
-from docforge.app import configure_application, create_window
+from oldschoolpdf.app import configure_application, create_window
 
 evidence = Path(__file__).resolve().parents[1] / "docs" / "evidence"
 evidence.mkdir(parents=True, exist_ok=True)
@@ -27,7 +27,7 @@ qInstallMessageHandler(message_handler)
 app = QApplication([])
 configure_application(app)
 app.setQuitOnLastWindowClosed(False)
-scratch = TemporaryDirectory(prefix="docforge-m0-smoke-")
+scratch = TemporaryDirectory(prefix="oldschoolpdf-m0-smoke-")
 settings_path = Path(scratch.name) / "settings.ini"
 first = create_window(settings_path)
 windows.append(first)
@@ -65,7 +65,7 @@ def graphite():
 def classic():
     try:
         assert first.isVisible()
-        assert app.property("docforgeTheme") == "Classic Light"
+        assert app.property("oldschoolpdfTheme") == "Classic Light"
         assert first.grab().save(str(evidence / "classic-light.png"))
         first.open_page("guide")
         first.open_page("capabilities")

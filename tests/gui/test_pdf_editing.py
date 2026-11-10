@@ -8,11 +8,11 @@ from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QImage
 from PySide6.QtWidgets import QDialog, QFileDialog, QInputDialog, QMessageBox
 
-from docforge.app import create_window
-from docforge.domain.tasks import TaskState
-from docforge.domain.viewer import rotate_rect
-from docforge.infrastructure import local_files
-from docforge.ui.edit_dialogs import FormDialog, MergeDialog, RangeDialog
+from oldschoolpdf.app import create_window
+from oldschoolpdf.domain.tasks import TaskState
+from oldschoolpdf.domain.viewer import rotate_rect
+from oldschoolpdf.infrastructure import local_files
+from oldschoolpdf.ui.edit_dialogs import FormDialog, MergeDialog, RangeDialog
 
 
 @pytest.fixture

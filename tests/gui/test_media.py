@@ -6,12 +6,12 @@ import pytest
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QDialog, QFileDialog
 
-from docforge.app import create_window
-from docforge.domain.media import MediaOperation
-from docforge.domain.tasks import TaskState
-from docforge.infrastructure import media_output
-from docforge.ui.media_dialogs import BatchDialog, BatchReport
-from docforge.ui.ocr_setup import OcrSetupDialog
+from oldschoolpdf.app import create_window
+from oldschoolpdf.domain.media import MediaOperation
+from oldschoolpdf.domain.tasks import TaskState
+from oldschoolpdf.infrastructure import media_output
+from oldschoolpdf.ui.media_dialogs import BatchDialog, BatchReport
+from oldschoolpdf.ui.ocr_setup import OcrSetupDialog
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -75,14 +75,14 @@ def run_action(window, qtbot, key):
 
 
 def no_stages(folder):
-    return not list(folder.glob(".docforge-lote-*"))
+    return not list(folder.glob(".oldschoolpdf-lote-*"))
 
 
 @pytest.fixture
 def tessdata():
-    path = os.environ.get("DOCFORGE_TEST_TESSDATA")
+    path = os.environ.get("OLDSCHOOLPDF_TEST_TESSDATA")
     if not path:
-        pytest.skip("Defina DOCFORGE_TEST_TESSDATA com os modelos locais para testar OCR real")
+        pytest.skip("Defina OLDSCHOOLPDF_TEST_TESSDATA com os modelos locais para testar OCR real")
     path = Path(path).absolute()
     assert all((path / f"{code}.traineddata").is_file() for code in ("por", "eng"))
     return path
@@ -128,7 +128,7 @@ def test_t13_searchable_ocr_preserves_rotated_scan_and_only_processes_selection(
     with pymupdf.open() as art, pymupdf.open() as scan:
         draft = art.new_page(width=450, height=300)
         draft.insert_text((34, 78), phrase, fontsize=28)
-        draft.insert_text((34, 136), "DocForge Ultimate 2026", fontsize=26)
+        draft.insert_text((34, 136), "Old School PDF 2026", fontsize=26)
         image = draft.get_pixmap(dpi=220)
         first = scan.new_page(width=300, height=450)
         first.insert_image(first.rect, pixmap=image, rotate=90)

@@ -6,14 +6,14 @@ import pytest
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtWidgets import QDialog, QFileDialog, QLabel, QLineEdit, QPlainTextEdit
 
-from docforge.app import create_window
-from docforge.domain.security import REDACTION_DPI
-from docforge.domain.tasks import TaskState
-from docforge.domain.viewer import rotate_rect
-from docforge.infrastructure.pdf_engine import PdfEngine
-from docforge.infrastructure.pdf_security import PERMISSION_BITS
-from docforge.infrastructure.pdf_signatures import signature_report
-from docforge.ui.security_dialogs import (
+from oldschoolpdf.app import create_window
+from oldschoolpdf.domain.security import REDACTION_DPI
+from oldschoolpdf.domain.tasks import TaskState
+from oldschoolpdf.domain.viewer import rotate_rect
+from oldschoolpdf.infrastructure.pdf_engine import PdfEngine
+from oldschoolpdf.infrastructure.pdf_security import PERMISSION_BITS
+from oldschoolpdf.infrastructure.pdf_signatures import signature_report
+from oldschoolpdf.ui.security_dialogs import (
     MetadataDialog,
     ProtectionDialog,
     RedactionReviewDialog,
@@ -26,7 +26,7 @@ from docforge.ui.security_dialogs import (
 XMP = (
     '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF '
     'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
-    '<rdf:Description rdf:about="" xmlns:df="urn:docforge:qa">'
+    '<rdf:Description rdf:about="" xmlns:df="urn:oldschoolpdf:qa">'
     "<df:private>XMP_QA_ONLY</df:private></rdf:Description></rdf:RDF></x:xmpmeta>"
 )
 
@@ -399,7 +399,9 @@ def test_t17_visual_signature_keeps_warning_and_appearance(
         assert result.get_sigflags() <= 0
         first = result[0]
         signature = next(
-            a for a in first.annots() if a.info.get("subject") == "DocForge: assinatura visual"
+            a
+            for a in first.annots()
+            if a.info.get("subject") == "Old School PDF: assinatura visual"
         )
         area = signature.rect
         assert not area.is_empty
@@ -420,7 +422,7 @@ def signing_files(tmp_path):
     ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     user_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     root_name = x509.Name(
-        [x509.NameAttribute(x509.NameOID.COMMON_NAME, "Raiz fictícia DocForge QA")]
+        [x509.NameAttribute(x509.NameOID.COMMON_NAME, "Raiz fictícia Old School PDF QA")]
     )
     user_name = x509.Name([x509.NameAttribute(x509.NameOID.COMMON_NAME, "Pessoa fictícia QA")])
 
@@ -553,7 +555,7 @@ def test_m5_digital_signature_local_trust_coverage_and_tampering(
 def test_m5_unavailable_signing_does_not_offer_an_unusable_action(
     qtbot, monkeypatch, tmp_path, sample
 ):
-    from docforge.infrastructure.dependency_probe import LocalDependencyProbe
+    from oldschoolpdf.infrastructure.dependency_probe import LocalDependencyProbe
 
     original = LocalDependencyProbe.package_version
     monkeypatch.setattr(

@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from docforge.application.job_service import JobRegistry
-from docforge.domain.errors import InvalidTransitionError
-from docforge.domain.tasks import TaskSpec, TaskState
+from oldschoolpdf.application.job_service import JobRegistry
+from oldschoolpdf.domain.errors import InvalidTransitionError
+from oldschoolpdf.domain.tasks import TaskSpec, TaskState
 
 
 @pytest.fixture

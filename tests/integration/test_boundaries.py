@@ -9,12 +9,12 @@ from PySide6.QtCore import QMimeData, QPointF, Qt, QUrl
 from PySide6.QtGui import QDragEnterEvent
 from PySide6.QtWidgets import QApplication
 
-from docforge.app import create_window
-from docforge.infrastructure.settings_repository import SettingsRepository
+from oldschoolpdf.app import create_window
+from oldschoolpdf.infrastructure.settings_repository import SettingsRepository
 
 
 def test_runtime_sources_have_no_network_pdf_or_process_execution_in_ui():
-    source = Path(__file__).resolve().parents[2] / "src" / "docforge"
+    source = Path(__file__).resolve().parents[2] / "src" / "oldschoolpdf"
     banned = {"requests", "httpx", "urllib", "socket", "webbrowser", "subprocess"}
     for path in source.rglob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -66,7 +66,7 @@ def test_startup_diagnostics_and_remote_drops_do_not_use_network_or_spawn(
 def test_module_entrypoint_version_runs_in_a_separate_process():
     environment = {**os.environ, "PYTHONUTF8": "1"}
     result = subprocess.run(
-        [sys.executable, "-m", "docforge", "--version"],
+        [sys.executable, "-m", "oldschoolpdf", "--version"],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -74,7 +74,7 @@ def test_module_entrypoint_version_runs_in_a_separate_process():
         env=environment,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "0.5.0"
+    assert result.stdout.strip() == "0.6.0"
     assert result.stderr == ""
 
 
@@ -82,7 +82,14 @@ def test_module_starts_real_gui_and_saves_layout_in_separate_process(tmp_path):
     settings_path = tmp_path / "processo separado ç 漢字.ini"
     environment = {**os.environ, "PYTHONUTF8": "1"}
     result = subprocess.run(
-        [sys.executable, "-m", "docforge", "--settings-file", str(settings_path), "--smoke-test"],
+        [
+            sys.executable,
+            "-m",
+            "oldschoolpdf",
+            "--settings-file",
+            str(settings_path),
+            "--smoke-test",
+        ],
         capture_output=True,
         text=True,
         encoding="utf-8",

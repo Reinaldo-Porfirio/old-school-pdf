@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from docforge.domain.models import DocumentSession, PageReference, SignatureState
+from oldschoolpdf.domain.models import DocumentSession, PageReference, SignatureState
 
 
 def test_sessions_have_independent_mutable_state(tmp_path):

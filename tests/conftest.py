@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from docforge.app import configure_application, create_window
+from oldschoolpdf.app import configure_application, create_window
 
 # O plugin offscreen não usa o catálogo de fontes nativo do Windows.
 # Usar fontes já instaladas, sem baixar ou redistribuir fontes do sistema.

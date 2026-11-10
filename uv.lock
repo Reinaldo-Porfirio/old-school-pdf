@@ -300,46 +300,6 @@ wheels = [
 ]
 
 [[package]]
-name = "docforge-ultimate"
-version = "0.5.0"
-source = { editable = "." }
-dependencies = [
-    { name = "pymupdf" },
-    { name = "pyside6-essentials" },
-]
-
-[package.optional-dependencies]
-signing = [
-    { name = "pyhanko" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "build" },
-    { name = "hatchling" },
-    { name = "pytest" },
-    { name = "pytest-qt" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pyhanko", marker = "extra == 'signing'", specifier = "==0.38.1" },
-    { name = "pymupdf", specifier = "==2.1" },
-    { name = "pyside6-essentials", specifier = "==6.12.0" },
-]
-provides-extras = ["signing"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "build", specifier = "==1.6.1" },
-    { name = "hatchling", specifier = "==1.33.0" },
-    { name = "pytest", specifier = "==9.2.0" },
-    { name = "pytest-qt", specifier = "==4.5.0" },
-    { name = "ruff", specifier = "==0.17.3" },
-]
-
-[[package]]
 name = "flatbuffers"
 version = "25.12.19"
 source = { registry = "https://pypi.org/simple" }
@@ -703,6 +663,46 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/fa/84ab064514440c1f64a1b21088f2c82756defdd05e07c75ab233899565b2/numpy-2.5.4-cp314-cp314t-win32.whl", hash = "sha256:64d1c8ac28a4077cf987e0a71a7a0ef7e2df70722f07f0baa42dbb7eb6938647", size = 6340926, upload-time = "2026-10-10T20:04:22.865Z" },
     { url = "https://files.pythonhosted.org/packages/7e/7e/6cd886876f435b10685db9b9f7eeb70356f99e052116f4e5f11c5792c714/numpy-2.5.4-cp314-cp314t-win_amd64.whl", hash = "sha256:067374eb538c34c745436365cf7b0112595c1d326f21ce4ff340f61230239fbb", size = 12901584, upload-time = "2026-10-10T20:04:24.99Z" },
     { url = "https://files.pythonhosted.org/packages/38/1b/3c1684f6a06f7307f2335fca6e486cb162847fb97e91d65f8eb5cabad213/numpy-2.5.4-cp314-cp314t-win_arm64.whl", hash = "sha256:e94aef2c639da4a960ad0db8e06471208d8589974953d78b61d345b4eb99e394", size = 10891152, upload-time = "2026-10-10T20:04:27.52Z" },
+]
+
+[[package]]
+name = "old-school-pdf"
+version = "0.6.0"
+source = { editable = "." }
+dependencies = [
+    { name = "pymupdf" },
+    { name = "pyside6-essentials" },
+]
+
+[package.optional-dependencies]
+signing = [
+    { name = "pyhanko" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "build" },
+    { name = "hatchling" },
+    { name = "pytest" },
+    { name = "pytest-qt" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pyhanko", marker = "extra == 'signing'", specifier = "==0.38.1" },
+    { name = "pymupdf", specifier = "==2.1" },
+    { name = "pyside6-essentials", specifier = "==6.12.0" },
+]
+provides-extras = ["signing"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "build", specifier = "==1.6.1" },
+    { name = "hatchling", specifier = "==1.33.0" },
+    { name = "pytest", specifier = "==9.2.0" },
+    { name = "pytest-qt", specifier = "==4.5.0" },
+    { name = "ruff", specifier = "==0.17.3" },
 ]
 
 [[package]]
