@@ -1,0 +1,97 @@
+"""Smoke Qt nativo em processo separado com INI temporário e imagens dos temas."""
+
+import json
+import platform
+import sys
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from PySide6.QtCore import QTimer, QtMsgType, qInstallMessageHandler, qVersion
+from PySide6.QtWidgets import QApplication
+
+from docforge.app import configure_application, create_window
+
+evidence = Path(__file__).resolve().parents[1] / "docs" / "evidence"
+evidence.mkdir(parents=True, exist_ok=True)
+messages = []
+failures = []
+windows = []
+
+
+def message_handler(kind, context, message):
+    if kind in (QtMsgType.QtWarningMsg, QtMsgType.QtCriticalMsg, QtMsgType.QtFatalMsg):
+        messages.append(message)
+
+
+qInstallMessageHandler(message_handler)
+app = QApplication([])
+configure_application(app)
+app.setQuitOnLastWindowClosed(False)
+scratch = TemporaryDirectory(prefix="docforge-m0-smoke-")
+settings_path = Path(scratch.name) / "settings.ini"
+first = create_window(settings_path)
+windows.append(first)
+first.show()
+
+
+def restored_window():
+    try:
+        fresh = windows[-1]
+        assert fresh.layout_restored
+        assert fresh.preferences.theme == "Graphite Pro"
+        assert fresh.navigation_dock.isHidden()
+        assert fresh.tabs.count() == 1
+        assert fresh.jobs_dock.tree.topLevelItemCount() == 0
+        assert fresh.close()
+    except Exception as error:
+        failures.append(repr(error))
+    app.quit()
+
+
+def graphite():
+    try:
+        assert first.grab().save(str(evidence / "graphite-pro.png"))
+        first.navigation_dock.hide()
+        assert first.close()
+        fresh = create_window(settings_path)
+        windows.append(fresh)
+        fresh.show()
+        QTimer.singleShot(300, restored_window)
+    except Exception as error:
+        failures.append(repr(error))
+        app.quit()
+
+
+def classic():
+    try:
+        assert first.isVisible()
+        assert app.property("docforgeTheme") == "Classic Light"
+        assert first.grab().save(str(evidence / "classic-light.png"))
+        first.open_page("guide")
+        first.open_page("capabilities")
+        first.open_page("home")
+        first.change_theme("Graphite Pro")
+        QTimer.singleShot(300, graphite)
+    except Exception as error:
+        failures.append(repr(error))
+        app.quit()
+
+
+QTimer.singleShot(300, classic)
+QTimer.singleShot(15000, app.quit)
+app.exec()
+result = {
+    "platform": platform.platform(),
+    "python": sys.version,
+    "qt": qVersion(),
+    "platform_plugin": app.platformName(),
+    "qt_warnings_or_errors": messages,
+    "failures": failures,
+    "round_trip_completed": len(windows) == 2 and windows[-1].layout_restored,
+}
+(evidence / "smoke.json").write_text(
+    json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+)
+print(json.dumps(result, ensure_ascii=False, indent=2))
+scratch.cleanup()
+raise SystemExit(0 if not failures and not messages and result["round_trip_completed"] else 1)

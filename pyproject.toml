@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "docforge-ultimate"
+version = "0.5.0"
+description = "Suíte local para leitura, edição, OCR e segurança de PDFs"
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [{name = "DocForge Ultimate contributors"}]
+dependencies = ["PySide6-Essentials==6.12.0", "PyMuPDF==2.1"]
+
+[project.optional-dependencies]
+signing = ["pyHanko==0.38.1"]
+
+[project.scripts]
+docforge = "docforge.app:main"
+
+[dependency-groups]
+dev = [
+  "pytest==9.2.0",
+  "pytest-qt==4.5.0",
+  "ruff==0.17.3",
+  "build==1.6.1",
+  "hatchling==1.33.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/docforge"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "docs", "scripts", "pyproject.toml", "uv.lock", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md", ".github"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+qt_api = "pyside6"
+qt_log_level_fail = "WARNING"
+addopts = "-ra --strict-config --strict-markers"
+filterwarnings = ["error"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src"]
+exclude = [".tools", ".cache", ".venv", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
