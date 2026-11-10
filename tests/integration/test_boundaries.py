@@ -74,7 +74,7 @@ def test_module_entrypoint_version_runs_in_a_separate_process():
         env=environment,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "0.6.0"
+    assert result.stdout.strip() == "0.6.1"
     assert result.stderr == ""
 
 

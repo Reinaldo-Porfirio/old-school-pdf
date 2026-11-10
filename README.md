@@ -19,8 +19,8 @@ completos. Nada de minimalismo.
 
 | Arquivo | Para quem |
 |---|---|
-| [**OldSchoolPDF-0.6.0-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.6.0/OldSchoolPDF-0.6.0-setup.exe) (≈ 43 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
-| [**OldSchoolPDF-0.6.0-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.6.0/OldSchoolPDF-0.6.0-sem-instalar.zip) (≈ 58 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
+| [**OldSchoolPDF-0.6.1-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.6.1/OldSchoolPDF-0.6.1-setup.exe) (≈ 43 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
+| [**OldSchoolPDF-0.6.1-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.6.1/OldSchoolPDF-0.6.1-sem-instalar.zip) (≈ 58 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
 
 **Requisitos:** Windows 10 ou 11 de 64 bits e cerca de 130 MB livres em disco. Não precisa
 de Python, de conta nem de internet. Foi testado no Windows 11. O Windows 10 é aceito,
@@ -30,7 +30,7 @@ mas ainda não foi testado.
 > código, então o SmartScreen avisa na primeira vez. Clique em **Mais informações >
 > Executar assim mesmo**. Para conferir se o arquivo é o original, compare o
 > SHA-256 com o publicado na [página da versão](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/latest)
-> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.6.0-setup.exe`).
+> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.6.1-setup.exe`).
 
 ## O que ele faz
 

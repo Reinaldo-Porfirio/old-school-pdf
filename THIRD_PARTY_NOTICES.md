@@ -1,4 +1,4 @@
-# Avisos de terceiros · Old School PDF 0.6.0
+# Avisos de terceiros · Old School PDF 0.6.1
 
 Atualizado em 10/11/2026. O código do Old School PDF usa **AGPL-3.0-or-later**.
 Cada componente de terceiros mantém os termos de quem o publicou. O `uv.lock`
@@ -101,7 +101,7 @@ são gerados por `packaging/build.py`. O executável contém:
   separados em `_internal/PySide6` e podem ser substituídas por versões compatíveis
   modificadas pelo usuário. Os textos da LGPL-3.0 e da GPL-3.0 vão em `_internal/licenses`;
 - **PyMuPDF e MuPDF** sob AGPL-3.0. O código-fonte completo e correspondente do
-  aplicativo é este repositório, na tag da versão (por exemplo, `v0.6.0`);
+  aplicativo é este repositório, na tag da versão (por exemplo, `v0.6.1`);
 - **pyHanko** e as dependências da tabela acima, com os arquivos de licença de cada
   pacote em `_internal/*.dist-info`;
 - **setuptools** 84.2.1 (MIT), incluído pelo PyInstaller como dependência de execução.

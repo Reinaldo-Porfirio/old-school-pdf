@@ -1,5 +1,12 @@
 # Alterações
 
+## 0.6.1 · 10/11/2026
+
+- O executável e o instalador passam a incluir os textos da LGPL-3.0 e da GPL-3.0 (Qt),
+  a licença do Python e os arquivos de licença de cada biblioteca empacotada.
+- README com links diretos de download, requisitos, verificação por SHA-256 e passo a passo
+  do OCR. THIRD_PARTY_NOTICES documenta a distribuição binária.
+
 ## 0.6.0 · 10/11/2026 · Old School PDF
 
 - Novo nome: DocForge Ultimate passa a se chamar **Old School PDF**. Pacote `oldschoolpdf`,
