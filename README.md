@@ -1,77 +1,109 @@
 # Old School PDF
 
+[![Última versão](https://img.shields.io/github/v/release/Reinaldo-Porfirio/old-school-pdf?label=vers%C3%A3o)](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/latest)
+[![Testes](https://github.com/Reinaldo-Porfirio/old-school-pdf/actions/workflows/quality.yml/badge.svg)](https://github.com/Reinaldo-Porfirio/old-school-pdf/actions/workflows/quality.yml)
+[![Licença AGPL-3.0](https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue)](LICENSE)
+![Windows 10 e 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0a246a)
+
 > Grátis para sempre. Sem assinatura, sem cadastro, sem nuvem. Você baixa e é seu.
+
+Editor de PDF para Windows que funciona **sem internet**, com visual de software
+dos anos 2000: relevo 3D, barras de título em degradê, ícones coloridos e menus
+completos. Nada de minimalismo.
 
 ![Old School PDF com o visual Clássico 2000](docs/screenshots/classico-2000-pdf.png)
 
-Aplicativo desktop livre para ler, organizar e editar PDFs locais. Abra documentos
-em abas, mescle e reorganize páginas, adicione anotações, preencha campos AcroForm
-compatíveis e grave uma cópia. Use miniaturas, rolagem contínua, busca e zoom.
-Converta imagens, extraia conteúdo, otimize PDFs e processe lotes. O OCR local
-é habilitado com modelos de idioma validados pelo usuário.
-A aba **Segurança** reúne metadados, proteção AES-256, redação rasterizada e
-assinatura visual. Assinatura e verificação criptográficas são opcionais.
-A interface usa o visual **Clássico 2000**: relevo 3D, barras de título em
-degradê, ícones coloridos, menus completos, atalhos configuráveis e painéis
-reorganizáveis. Nada de minimalismo.
+## ⬇️ Baixar
 
-O projeto se chamava **DocForge Ultimate** até a versão 0.5.0. Os registros
-históricos em `docs/decisions` mantêm o nome antigo.
+**[Página de downloads da versão mais recente](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/latest)**
+
+| Arquivo | Para quem |
+|---|---|
+| [**OldSchoolPDF-0.6.0-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.6.0/OldSchoolPDF-0.6.0-setup.exe) (≈ 43 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
+| [**OldSchoolPDF-0.6.0-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.6.0/OldSchoolPDF-0.6.0-sem-instalar.zip) (≈ 58 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
+
+**Requisitos:** Windows 10 ou 11 de 64 bits e cerca de 130 MB livres em disco. Não precisa
+de Python, de conta nem de internet. Foi testado no Windows 11. O Windows 10 é aceito,
+mas ainda não foi testado.
+
+> **"O Windows protegeu o computador"?** O instalador ainda não tem assinatura de
+> código, então o SmartScreen avisa na primeira vez. Clique em **Mais informações >
+> Executar assim mesmo**. Para conferir se o arquivo é o original, compare o
+> SHA-256 com o publicado na [página da versão](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/latest)
+> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.6.0-setup.exe`).
+
+## O que ele faz
+
+- **Ler:** abas, miniaturas, zoom, rolagem contínua, busca com acentos e cópia de texto.
+- **Organizar:** mesclar, dividir, extrair, reordenar arrastando miniaturas, girar e excluir páginas.
+- **Anotar:** destaque, sublinhado, comentários, caixas de texto, carimbos, formas e imagens.
+- **Formulários:** preenche campos AcroForm compatíveis.
+- **Converter:** imagens para PDF, PDF para PNG/JPEG, extração de texto e imagens, compactação e lotes.
+- **OCR local:** torna pesquisáveis os PDFs digitalizados, em português e inglês ([veja como ativar](#ativar-o-ocr)).
+- **Segurança:** senha AES-256, remoção de metadados, redação rasterizada, assinatura visual e
+  assinatura digital com certificado PKCS#12, com verificação offline.
+- **Sempre uma cópia:** o original nunca é sobrescrito. Desfazer e refazer percorrem as revisões.
+
+Tudo é processado no seu computador. Nenhum arquivo é enviado para a internet.
 
 ## Instalar no Windows
 
-Baixe `OldSchoolPDF-<versão>-setup.exe` e execute. O instalador:
+Execute o `setup.exe`. O instalador:
 
 - instala só para o seu usuário, sem pedir administrador (ou para todos, se preferir);
 - cria atalhos no menu Iniciar e, se você quiser, na área de trabalho;
 - pode colocar o Old School PDF em **Abrir com** para arquivos `.pdf`, sem trocar o seu leitor padrão;
-- vem com tudo incluído, até a assinatura digital. Não precisa de Python nem de internet.
+- vem com tudo incluído, até a assinatura digital.
 
-A desinstalação fica em **Configurações > Aplicativos** e remove programa, atalhos e
-associações. As preferências ficam em `%LOCALAPPDATA%\Old School PDF`.
+Para desinstalar, use **Configurações > Aplicativos > Old School PDF**. A desinstalação
+remove programa, atalhos e associações. As preferências ficam em
+`%LOCALAPPDATA%\Old School PDF` e não são apagadas.
+
+Na versão **sem instalar**, basta apagar a pasta extraída.
+
+## Ativar o OCR
+
+O reconhecimento de texto usa o Tesseract, que já vem dentro do programa, mas os
+**modelos de idioma são baixados à parte**:
+
+1. Baixe [`por.traineddata`](https://github.com/tesseract-ocr/tessdata_fast/raw/4.1.0/por.traineddata)
+   (português) e/ou [`eng.traineddata`](https://github.com/tesseract-ocr/tessdata_fast/raw/4.1.0/eng.traineddata)
+   (inglês) do repositório oficial `tessdata_fast`.
+2. Coloque os arquivos numa pasta, por exemplo `Documentos\tessdata`.
+3. No programa, abra **OCR > Configurar OCR local…**, escolha a pasta e valide.
 
 ## Executar a partir do código-fonte
 
-Requer Windows x64 e Python >=3.12,<3.15. O ambiente de teste foi Windows 11
-com Python 3.13.15. A instalação inclui o motor PyMuPDF 2.1.
-
-Com [uv](https://docs.astral.sh/uv/), na pasta do projeto:
-
-```powershell
-uv sync --frozen
-uv run --no-sync python -m oldschoolpdf
-```
-
-Para incluir assinatura e verificação digitais, instale o extra opcional.
+Para quem quer estudar ou modificar o código. Requer Windows x64,
+[Git](https://git-scm.com/) e o [uv](https://docs.astral.sh/uv/), que pode ser instalado com
+`winget install astral-sh.uv`. O uv baixa o Python certo (3.12 a 3.14) sozinho.
 
 ```powershell
+git clone https://github.com/Reinaldo-Porfirio/old-school-pdf.git
+cd old-school-pdf
 uv sync --frozen --extra signing
 uv run --no-sync python -m oldschoolpdf
 ```
 
-A primeira instalação baixa Python e pacotes. Depois dela, o aplicativo funciona
-offline. Use o ambiente preparado para abrir a janela ou passar um
-caminho de PDF direto na linha de comando.
+Sem `--extra signing`, os comandos de assinatura digital ficam desabilitados. A
+primeira instalação baixa Python e pacotes. Depois dela, o aplicativo funciona
+offline. Também é possível abrir um PDF direto:
 
 ```powershell
-.\.venv\Scripts\python.exe -m oldschoolpdf
-.\.venv\Scripts\python.exe -m oldschoolpdf "D:\Documentos\Relatório.pdf"
+uv run --no-sync python -m oldschoolpdf "D:\Documentos\Relatório.pdf"
 ```
 
-Com Python já instalado, alternativa sem uv:
+Com Python já instalado, uma alternativa sem uv:
 
 ```powershell
 py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -m pip install -e ".[signing]"
 .\.venv\Scripts\python.exe -m oldschoolpdf
 ```
 
-Após ativar `.venv\Scripts\Activate.ps1`, o comando é `python -m oldschoolpdf`.
-É possível usar um arquivo separado de preferências:
-`python -m oldschoolpdf --settings-file C:\pasta\preferencias.ini`.
-Para um diagnóstico de inicialização que abre a janela, grava as preferências
-e encerra automaticamente: `python -m oldschoolpdf --smoke-test`.
-Use `--settings-file` com um caminho de teste para preservar sua organização atual.
+Outras opções: `--settings-file C:\pasta\preferencias.ini` usa um arquivo de
+preferências separado, e `--smoke-test` abre a janela, grava as preferências e fecha
+sozinho, para diagnóstico.
 
 ## Ler e editar PDFs
 
@@ -109,25 +141,24 @@ Use `--settings-file` com um caminho de teste para preservar sua organização a
   e assinaturas. Aceita PDFs sem criptografia de até 100 páginas.
 - **Inserir assinatura visual** coloca um desenho ou PNG/JPEG como anotação.
   A assinatura visual é uma marca gráfica sem verificação criptográfica.
-- Com `signing`, **Assinar digitalmente uma cópia** usa PKCS#12 local.
+- **Assinar digitalmente uma cópia** usa um certificado PKCS#12 local.
   **Verificar assinaturas digitais** mostra integridade, cobertura e confiança
   baseada nas raízes X.509 fornecidas. A avaliação é offline.
 
-O INI de preferências fica em
-`%LOCALAPPDATA%\Old School PDF\settings.ini`. O caminho efetivo
-aparece em **Local e privacidade**. Ele guarda aparência, atalhos, organização
-da janela e limites de leitura. Página, zoom e revisões ficam na sessão da
-aba. A gravação atômica exige a identificação do Old School PDF em arquivos INI
-preexistentes e preserva outros arquivos indicados por engano.
+O INI de preferências fica em `%LOCALAPPDATA%\Old School PDF\settings.ini`. O
+caminho efetivo aparece em **Ferramentas > Preferências > Local e privacidade**.
+Ele guarda aparência, atalhos, organização da janela e limites de leitura. Página,
+zoom e revisões ficam na sessão da aba. A gravação atômica exige a identificação do
+Old School PDF em arquivos INI preexistentes e preserva outros arquivos indicados
+por engano.
 
 ## Desenvolvimento e testes
 
 Antes da suíte, defina `OLDSCHOOLPDF_TEST_TESSDATA` como a pasta que contém os
 modelos `por.traineddata` e `eng.traineddata` se quiser executar o OCR real.
-A ausência dessa variável deixa somente os casos com reconhecimento real
-fora da suíte. O teste de OCR indisponível continua ativo.
-Sem o extra `signing`, o caso com certificado sintético é ignorado e o
-teste de disponibilidade dos comandos continua ativo.
+Sem essa variável, só os casos com reconhecimento real ficam de fora. O teste de
+OCR indisponível continua ativo. Sem o extra `signing`, o caso com certificado
+sintético é ignorado, e o teste de disponibilidade dos comandos continua ativo.
 
 ```powershell
 uv sync --frozen --extra signing
@@ -140,9 +171,10 @@ uv run --no-sync python -m build --no-isolation
 
 `offscreen` serve para testes headless. Remova a variável para abrir a janela
 normal: `Remove-Item Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue`.
-Os testes usam arquivos temporários, não as preferências reais. A CI configura
-Windows e Python 3.12/3.13/3.14; execução na CI só é comprovada após subir o projeto
-e observar o resultado. Linux e Windows 10 ainda não foram validados.
+Os testes usam arquivos temporários, não as preferências reais. A
+[CI](https://github.com/Reinaldo-Porfirio/old-school-pdf/actions/workflows/quality.yml)
+roda lint, testes e build no Windows com Python 3.12, 3.13 e 3.14 a cada envio.
+Linux ainda não foi validado.
 
 ### Gerar o executável e o instalador
 
@@ -165,11 +197,18 @@ Use `--sem-instalador` para parar no executável.
 - `src/oldschoolpdf/application`: contratos e serviços, sem widgets.
 - `src/oldschoolpdf/infrastructure`: QSettings, inspeção local e processos PDF.
 - `src/oldschoolpdf/ui`: janela, painéis, diálogos, tema e ícones SVG próprios.
-- `packaging/`: lançador, especificação do PyInstaller, script do instalador e build.
+- `packaging/`: lançador, especificação do PyInstaller, script do instalador, build e textos de licença incluídos no executável.
 - [Conceitos visuais](docs/concepts/README.md) que deram origem ao tema Clássico 2000.
-- [Arquitetura](docs/architecture.md), [decisões do M5](docs/decisions/0005-m5-security.md),
-  [plano de teste](docs/test_plan.md),
-  [guia offline](docs/user_guide.md), [especificação integral](docs/product_spec.md).
+- [Arquitetura](docs/architecture.md), [decisões de projeto](docs/decisions),
+  [plano de teste](docs/test_plan.md), [guia do usuário](docs/user_guide.md),
+  [especificação](docs/product_spec.md) e [histórico de versões](CHANGELOG.md).
 
-Código sob **AGPL-3.0-or-later**, com PyMuPDF pela opção AGPLv3.
-Consulte [LICENSE](LICENSE) e [avisos de terceiros](THIRD_PARTY_NOTICES.md).
+O projeto se chamava **DocForge Ultimate** até a versão 0.5.0. Os registros
+históricos em `docs/decisions` mantêm o nome antigo.
+
+## Licença
+
+Código sob **AGPL-3.0-or-later**, com PyMuPDF pela opção AGPLv3. Você pode usar,
+estudar, modificar e compartilhar. Quem distribuir versões modificadas, inclusive
+como serviço em rede, precisa publicar o código delas sob a mesma licença.
+Consulte [LICENSE](LICENSE) e os [avisos de terceiros](THIRD_PARTY_NOTICES.md).

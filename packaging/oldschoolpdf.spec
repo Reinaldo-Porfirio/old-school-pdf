@@ -1,6 +1,7 @@
 # Especificação do PyInstaller para o Old School PDF (pasta única, sem console).
 # Rode pelo packaging/build.py, que gera o ícone e o arquivo de versão antes.
 
+import sys
 from pathlib import Path
 
 from PyInstaller.utils.hooks import copy_metadata
@@ -8,15 +9,28 @@ from PyInstaller.utils.hooks import copy_metadata
 root = Path(SPECPATH).parent
 assets = root / "build" / "assets"
 
+# Pacotes de terceiros que vão no executável. Os metadados levam junto os arquivos
+# de licença de cada um; pymupdf e pyhanko também são lidos pela página de recursos.
+BUNDLED = [
+    "pyside6-essentials", "shiboken6", "pymupdf", "pyhanko", "pyhanko-certvalidator",
+    "asn1crypto", "cryptography", "cffi", "pycparser", "lxml", "aiohttp",
+    "aiohappyeyeballs", "aiosignal", "attrs", "certifi", "frozenlist", "idna",
+    "multidict", "propcache", "yarl", "oscrypto", "tzdata", "tzlocal", "uritools",
+    "setuptools",
+]  # fmt: skip
+licenses = [(str(path), "licenses") for path in (root / "packaging" / "licenses").glob("*.txt")]
+python_license = Path(sys.base_prefix) / "LICENSE.txt"
+if python_license.exists():
+    licenses.append((str(python_license), "licenses/Python"))
+
 a = Analysis(
     [str(root / "packaging" / "launcher.py")],
     pathex=[str(root / "src")],
     datas=[
         (str(root / "LICENSE"), "."),
         (str(root / "THIRD_PARTY_NOTICES.md"), "."),
-        # A página de recursos locais lê a versão destes pacotes pelos metadados.
-        *copy_metadata("pymupdf"),
-        *copy_metadata("pyhanko"),
+        *licenses,
+        *[entry for name in BUNDLED for entry in copy_metadata(name)],
     ],
     # O leitor é importado sob demanda; declarar garante que entre no pacote.
     hiddenimports=["oldschoolpdf.infrastructure.pdf_worker"],
