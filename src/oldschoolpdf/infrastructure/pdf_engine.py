@@ -9,7 +9,7 @@ from unicodedata import normalize
 
 import pymupdf
 
-from oldschoolpdf.domain.editing import ANNOTATION_EDITS, PAGE_EDITS
+from oldschoolpdf.domain.editing import ANNOTATION_EDITS, PAGE_EDITS, TEXT_EDITS
 from oldschoolpdf.domain.errors import OldSchoolPDFError
 from oldschoolpdf.domain.viewer import MAX_QUERY_LENGTH, MAX_RASTER_BYTES, MAX_SEARCH_HITS, PdfRect
 from oldschoolpdf.infrastructure.local_files import FileStamp, file_stamp
@@ -41,6 +41,7 @@ from oldschoolpdf.infrastructure.pdf_storage import (
     open_pdf,
     save_validated,
 )
+from oldschoolpdf.infrastructure.pdf_text_edit import read_blocks, replace_blocks
 
 MAX_PAGE_POINTS = 25_000
 MAX_WORDS = 120_000
@@ -165,39 +166,28 @@ class PdfEngine:
     def render(
         self, page: int, rotation: int, zoom: float | str, width: int, height: int, dpr: float
     ) -> tuple[dict, bytes]:
+        return _raster(self._page(page), page, rotation, zoom, width, height, dpr)
+
+    def text_blocks(self, page: int, width: int, height: int, dpr: float) -> tuple[dict, bytes]:
+        """Blocos de texto da página atual e uma imagem dela para o editor."""
         pdf_page = self._page(page)
-        page_width, page_height = pdf_page.rect.width, pdf_page.rect.height
-        if rotation in (90, 270):
-            page_width, page_height = page_height, page_width
-        if zoom in ("page", "thumbnail", "continuous"):
-            scale = min(width / page_width, height / page_height, 8.0)
-        elif zoom == "width":
-            scale = min(width / page_width, 8.0)
-        else:
-            scale = float(zoom)
-        if not 0 < scale <= 8 or rotation not in (0, 90, 180, 270) or not 1 <= dpr <= 4:
-            raise OldSchoolPDFError("Parâmetros de visualização inválidos.")
-        desired = scale * dpr
-        raster_scale = min(
-            desired,
-            8190 / max(page_width, page_height),
-            math.sqrt(7_900_000 / (page_width * page_height)),
-        )
-        matrix = pymupdf.Matrix(raster_scale, raster_scale).prerotate(rotation)
-        raster = pdf_page.get_pixmap(matrix=matrix, colorspace=pymupdf.csRGB, alpha=False)
-        if raster.stride * raster.height > MAX_RASTER_BYTES:
-            raise OldSchoolPDFError("A imagem da página excede o limite de memória.")
-        return {
-            "page": page,
-            "width": raster.width,
-            "height": raster.height,
-            "stride": raster.stride,
-            "width_pt": page_width,
-            "height_pt": page_height,
-            "rotation": (pdf_page.rotation + rotation) % 360,
-            "scale": scale,
-            "limited": raster_scale < desired,
-        }, raster.samples
+        frame, raster = _raster(pdf_page, page, 0, "page", width, height, dpr)
+        return {"blocks": read_blocks(pdf_page), "frame": frame}, raster
+
+    def preview_text(
+        self, page: int, blocks: list, options: dict, width: int, height: int, dpr: float
+    ) -> tuple[dict, bytes]:
+        """Aplica a edição numa cópia descartável e devolve a imagem do resultado."""
+        self._page(page)
+        self._require_text_edit()
+        with self.history.read(self.history.current, self._password) as working:
+            report = replace_blocks(working, page, blocks, options)
+            frame, raster = _raster(working[page], page, 0, "page", width, height, dpr)
+        return {"report": report, "frame": frame}, raster
+
+    def _require_text_edit(self) -> None:
+        if not self._allowed(pymupdf.PDF_PERM_MODIFY):
+            raise OldSchoolPDFError("As permissões do PDF não permitem alterar o conteúdo.")
 
     def search(self, page: int, query: str, limit: int) -> dict:
         pdf_page = self._page(page)
@@ -265,6 +255,8 @@ class PdfEngine:
             permission = self._assembly_permission()
         elif action in ANNOTATION_EDITS:
             permission = pymupdf.PDF_PERM_ANNOTATE
+        elif action in TEXT_EDITS:
+            permission = pymupdf.PDF_PERM_MODIFY
         elif action == "fill_field":
             if has_xfa(self.document):
                 raise OldSchoolPDFError(
@@ -275,9 +267,12 @@ class PdfEngine:
             raise OldSchoolPDFError("Operação de edição desconhecida.")
         if not self._allowed(permission):
             raise OldSchoolPDFError("As permissões do PDF restringem essa alteração.")
+        report = None
         with self.history.read(self.history.current, self._password) as working:
             if action in PAGE_EDITS:
                 page = edit_pages(working, action, page, values)
+            elif action in TEXT_EDITS:
+                report = replace_blocks(working, page, values["blocks"], values.get("options", {}))
             elif action == "fill_field":
                 update_field(working[page], values)
             else:
@@ -285,7 +280,10 @@ class PdfEngine:
             verified = self.history.add(working, scratch, self._password, page)
         self.document.close()
         self.document = verified
-        return self._revision_result()
+        result = self._revision_result()
+        if report is not None:
+            result["report"] = report
+        return result
 
     def step(self, direction: int) -> dict:
         verified = self.history.step(direction, self._password)
@@ -373,3 +371,46 @@ class PdfEngine:
 
     def _revision_stamp(self, revision: Revision) -> FileStamp:
         return file_stamp(revision.path) if revision.serial else self.history.original_stamp
+
+
+def _raster(
+    pdf_page: pymupdf.Page,
+    page: int,
+    rotation: int,
+    zoom: float | str,
+    width: int,
+    height: int,
+    dpr: float,
+) -> tuple[dict, bytes]:
+    page_width, page_height = pdf_page.rect.width, pdf_page.rect.height
+    if rotation in (90, 270):
+        page_width, page_height = page_height, page_width
+    if zoom in ("page", "thumbnail", "continuous"):
+        scale = min(width / page_width, height / page_height, 8.0)
+    elif zoom == "width":
+        scale = min(width / page_width, 8.0)
+    else:
+        scale = float(zoom)
+    if not 0 < scale <= 8 or rotation not in (0, 90, 180, 270) or not 1 <= dpr <= 4:
+        raise OldSchoolPDFError("Parâmetros de visualização inválidos.")
+    desired = scale * dpr
+    raster_scale = min(
+        desired,
+        8190 / max(page_width, page_height),
+        math.sqrt(7_900_000 / (page_width * page_height)),
+    )
+    matrix = pymupdf.Matrix(raster_scale, raster_scale).prerotate(rotation)
+    raster = pdf_page.get_pixmap(matrix=matrix, colorspace=pymupdf.csRGB, alpha=False)
+    if raster.stride * raster.height > MAX_RASTER_BYTES:
+        raise OldSchoolPDFError("A imagem da página excede o limite de memória.")
+    return {
+        "page": page,
+        "width": raster.width,
+        "height": raster.height,
+        "stride": raster.stride,
+        "width_pt": page_width,
+        "height_pt": page_height,
+        "rotation": (pdf_page.rotation + rotation) % 360,
+        "scale": scale,
+        "limited": raster_scale < desired,
+    }, raster.samples

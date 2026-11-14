@@ -34,6 +34,8 @@ def main() -> None:
         "edit": engine.edit,
         "step": engine.step,
         "verify_signatures": engine.verify_signatures,
+        "text_blocks": engine.text_blocks,
+        "preview_text": engine.preview_text,
         "inspect_inputs": inspect_inputs,
         "merge": merge,
         "probe_ocr": probe_ocr,

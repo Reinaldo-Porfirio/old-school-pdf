@@ -8,6 +8,7 @@ from oldschoolpdf.domain.viewer import PdfRect
 
 PAGE_EDITS = {"move_page", "delete_pages", "rotate_pages"}
 ANNOTATION_EDITS = {"add_annotation", "move_annotation", "remove_annotation", "change_annotation"}
+TEXT_EDITS = {"replace_text"}
 ANNOTATION_LABELS = {
     "highlight": "Destaque",
     "underline": "Sublinhado",

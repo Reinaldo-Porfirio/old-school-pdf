@@ -57,6 +57,8 @@ class PdfProcess(QObject):
                 "inspect_inputs",
                 "process_media",
                 "verify_signatures",
+                "text_blocks",
+                "preview_text",
             }
             else self.TIMEOUT_MS
         )
