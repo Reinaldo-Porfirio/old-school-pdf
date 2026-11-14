@@ -17,6 +17,7 @@ from oldschoolpdf.application.pdf_output import PdfOutputTask
 from oldschoolpdf.domain.editing import AnnotationInfo, FormField
 from oldschoolpdf.domain.models import DocumentSession, SignatureState
 from oldschoolpdf.domain.tasks import TaskSpec, TaskState
+from oldschoolpdf.domain.text_editing import block_from_dict
 from oldschoolpdf.domain.viewer import MAX_SEARCH_HITS, PdfInfo, PdfRect, RasterRequest, SearchHit
 
 if TYPE_CHECKING:
@@ -172,6 +173,10 @@ class PdfViewer(QObject):
     continuous_frame_ready = Signal(object, object)
     print_frame_ready = Signal(int, object)
     print_failed = Signal(str)
+    text_blocks_ready = Signal(int, object, object)
+    text_preview_ready = Signal(object, object)
+    text_edited = Signal(object)
+    text_edit_failed = Signal(str)
 
     def __init__(self, path: Path, workspace: PdfWorkspace) -> None:
         super().__init__(workspace)
@@ -215,6 +220,7 @@ class PdfViewer(QObject):
         self._copy: tuple[int, PdfRect | None] | None = None
         self._printing: deque[PrintRequest] = deque()
         self.printing = False
+        self._editing_text = False
         self._inflight: tuple[str, object] | None = None
         self._worker = self._new_worker()
 
@@ -376,6 +382,30 @@ class PdfViewer(QObject):
 
     def step(self, direction: int) -> None:
         self._queue_command("step", {"direction": direction}, "Restaurando revisão…")
+
+    def read_text(self, page: int, width: int, height: int, dpr: float) -> bool:
+        """Pede os blocos de texto da página e uma imagem dela para o editor de texto."""
+        arguments = {"page": page, "width": width, "height": height, "dpr": dpr}
+        return self._queue_command("text_blocks", arguments, "Lendo o texto da página…")
+
+    def preview_text(
+        self, page: int, blocks: list[dict], options: dict, width: int, height: int, dpr: float
+    ) -> bool:
+        arguments = {
+            "page": page,
+            "blocks": blocks,
+            "options": options,
+            "width": width,
+            "height": height,
+            "dpr": dpr,
+        }
+        return self._queue_command("preview_text", arguments, "Gerando a prévia da edição…")
+
+    def replace_text(self, page: int, blocks: list[dict], options: dict) -> bool:
+        if not self.change("replace_text", {"blocks": blocks, "options": options}, page=page):
+            return False
+        self._editing_text = True
+        return True
 
     def print_pages(self, pages: list[int], scale: float) -> bool:
         """Pede as páginas uma a uma, na escala da impressora e sem passar pelo cache."""
@@ -612,6 +642,22 @@ class PdfViewer(QObject):
                 self._searched(token, reply["result"])
             elif operation in {"edit", "step"}:
                 self._changed_revision(reply["result"])
+                if self._editing_text:
+                    self._editing_text = False
+                    self.text_edited.emit(reply["result"].get("report", {}))
+            elif operation == "text_blocks":
+                result = reply["result"]
+                blocks = tuple(block_from_dict(entry) for entry in result["blocks"])
+                frame = PageFrame.from_reply(result["frame"], data)
+                self.busy = ""
+                self.changed.emit()
+                self.text_blocks_ready.emit(result["frame"]["page"], blocks, frame)
+            elif operation == "preview_text":
+                result = reply["result"]
+                frame = PageFrame.from_reply(result["frame"], data)
+                self.busy = ""
+                self.changed.emit()
+                self.text_preview_ready.emit(result["report"], frame)
             elif operation == "export":
                 self._finish_export(detail=reply["result"].get("detail", ""))
             elif operation == "verify_signatures":
@@ -704,10 +750,18 @@ class PdfViewer(QObject):
             self._fatal(error)
         elif operation == "export":
             self._finish_export(error)
+        elif operation in {"text_blocks", "preview_text"}:
+            self.busy = ""
+            self.changed.emit()
+            self.text_edit_failed.emit(error)
         elif operation in {"edit", "step", "verify_signatures"}:
             self.busy = ""
             self.changed.emit()
-            self.message.emit(error)
+            if self._editing_text:
+                self._editing_text = False
+                self.text_edit_failed.emit(error)
+            else:
+                self.message.emit(error)
         elif operation == "objects" and token == self.page:
             self.message.emit(error)
         elif operation == "search":
@@ -739,6 +793,9 @@ class PdfViewer(QObject):
             self.print_failed.emit(error)
             self._printing.clear()
             self.printing = False
+        if self._editing_text:
+            self._editing_text = False
+            self.text_edit_failed.emit(error)
         self.busy = ""
         self._command = None
         self._finish_job(self.open_job, error=error)

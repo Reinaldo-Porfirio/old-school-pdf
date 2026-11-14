@@ -38,6 +38,7 @@ class PdfInfo(DocumentMetadata):
     can_organize: bool = False
     can_annotate: bool = False
     can_fill: bool = False
+    can_modify: bool = False
     can_print: bool = False
     can_print_hq: bool = False
 

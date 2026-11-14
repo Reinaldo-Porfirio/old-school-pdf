@@ -285,6 +285,7 @@ class EditorPane(QWidget):
                 button.setDefaultAction(actions[key])
                 root.addWidget(button)
 
+        add_tools(self.tr("Texto original"), ("edit_text",))
         add_tools(
             self.tr("Adicionar à página"),
             (

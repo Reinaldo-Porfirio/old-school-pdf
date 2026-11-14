@@ -148,6 +148,7 @@ class PdfEngine:
             "can_organize": self._allowed(self._assembly_permission()),
             "can_annotate": self._allowed(pymupdf.PDF_PERM_ANNOTATE),
             "can_fill": not has_xfa(doc) and self._allowed(self._form_permissions()),
+            "can_modify": self._allowed(pymupdf.PDF_PERM_MODIFY),
             "can_print": self._allowed(pymupdf.PDF_PERM_PRINT),
             # Sem o bit de alta qualidade, a impressão fica limitada a uma resolução baixa.
             "can_print_hq": self._allowed(pymupdf.PDF_PERM_PRINT)

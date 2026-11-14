@@ -52,6 +52,7 @@ from oldschoolpdf.ui.pages import CapabilitiesPage, GuidePage, HomePage
 from oldschoolpdf.ui.pdf_tab import ZOOM_LEVELS, PdfTab
 from oldschoolpdf.ui.print_tools import PrintTools
 from oldschoolpdf.ui.security_tools import SecurityTools
+from oldschoolpdf.ui.text_tools import TextTools
 from oldschoolpdf.ui.themes import apply_theme
 
 
@@ -102,6 +103,7 @@ class MainWindow(QMainWindow):
         self.media_tools = MediaTools(self)
         self.security_tools = SecurityTools(self)
         self.print_tools = PrintTools(self)
+        self.text_tools = TextTools(self)
         self._active_pdf: PdfTab | None = None
         self.setAcceptDrops(True)
         self.preferences = settings.load_preferences()
@@ -197,6 +199,13 @@ class MainWindow(QMainWindow):
             lambda: self._with_pdf(self.print_tools.print_document),
         )
         printing.setEnabled(False)
+        editing = self._action(
+            "edit_text",
+            self.tr("Editar te&xto do PDF…"),
+            "edit_text",
+            lambda: self._with_pdf(self.text_tools.edit),
+        )
+        editing.setEnabled(False)
         self._action(
             "capabilities",
             self.tr("&Recursos locais"),
@@ -424,6 +433,7 @@ class MainWindow(QMainWindow):
                 "split",
                 "extract",
                 "|",
+                "edit_text",
                 "highlight",
                 "underline",
                 "comment",
@@ -480,6 +490,7 @@ class MainWindow(QMainWindow):
                 "copy",
                 "|",
                 "select",
+                "edit_text",
             ),
         )
         annotations = edit.addMenu(self.tr("&Anotações"))
@@ -744,6 +755,7 @@ class MainWindow(QMainWindow):
         obj = tab.annotation() if annotating else None
         self.security_tools.update_controls(tab)
         self.print_tools.update_controls(tab)
+        self.text_tools.update_controls(tab)
         for key in (
             "find",
             "zoom_in",

@@ -120,6 +120,9 @@ ART: dict[str, str] = {
         '<path d="M9 16v-4.5a3 3 0 1 1 6 0V16z" fill="url(#gW)" stroke="#5a3410"/>'
         '<rect x="5" y="21" width="14" height="1.5" fill="#c8231a"/>'
     ),
+    "edit_text": _PAGE + '<path d="M8 7h6M11 7v8" stroke="#1957b8" stroke-width="2"/>'
+    '<path d="M13 21l1-4 7-7 3 3-7 7z" fill="url(#gY)" stroke="#8a6a00" stroke-linejoin="round" '
+    'transform="translate(-2 -1)"/>',
     "rectangle": '<rect x="3" y="5" width="18" height="14" fill="url(#gB)" stroke="#123f7a"/>',
     "ellipse": '<ellipse cx="12" cy="12" rx="9.5" ry="7.5" fill="url(#gGr)" stroke="#256a10"/>',
     "image": _IMAGE,

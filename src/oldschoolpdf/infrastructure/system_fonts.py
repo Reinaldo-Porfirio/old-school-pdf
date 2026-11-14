@@ -95,8 +95,8 @@ def _names(stream, offset: int, length: int) -> dict[int, str]:
     return {name_id: text for name_id, (_, text) in best.items()}
 
 
-def describe_font(path: Path) -> tuple[str, bool, bool] | None:
-    """Família, negrito e itálico de um arquivo, ou None se não puder ser embutido."""
+def describe_font(path: Path) -> tuple[tuple[str, bool, bool], str] | None:
+    """Chave (família, negrito, itálico) e nome legível, ou None se não puder ser embutida."""
     try:
         if path.stat().st_size > MAX_FONT_BYTES:
             return None
@@ -124,13 +124,16 @@ def describe_font(path: Path) -> tuple[str, bool, bool] | None:
     bold = bool(selection & 0x20) or "bold" in subfamily
     italic = bool(selection & 0x01) or "italic" in subfamily or "oblique" in subfamily
     plain = subfamily in ("", "regular", "normal", "roman", "book", "bold", "italic", "bold italic")
-    return (font_family_key(family) if plain else font_family_key(family + subfamily)), bold, italic
+    key = font_family_key(family) if plain else font_family_key(family + subfamily)
+    regular = subfamily in ("", "regular", "normal", "roman", "book")
+    display = family if regular else f"{family} {(names.get(17) or names.get(2) or '').strip()}"
+    return (key, bold, italic), display.strip()
 
 
 @lru_cache(maxsize=1)
-def system_fonts() -> dict[tuple[str, bool, bool], str]:
-    """Índice (família, negrito, itálico) -> arquivo, montado uma vez por processo."""
-    index: dict[tuple[str, bool, bool], str] = {}
+def system_fonts() -> dict[tuple[str, bool, bool], tuple[str, str]]:
+    """Índice (família, negrito, itálico) -> (arquivo, nome), montado uma vez por processo."""
+    index: dict[tuple[str, bool, bool], tuple[str, str]] = {}
     files = 0
     for folder in font_folders():
         try:
@@ -144,8 +147,8 @@ def system_fonts() -> dict[tuple[str, bool, bool], str]:
             if files > MAX_FONT_FILES:
                 return index
             described = describe_font(path)
-            if described and described[0]:
-                index.setdefault(described, str(path))
+            if described and described[0][0]:
+                index.setdefault(described[0], (str(path), described[1]))
     return index
 
 
@@ -164,9 +167,9 @@ def resolve_font(style: TextStyle, bold: bool, italic: bool, *, use_system: bool
     if use_system and key:
         fonts = system_fonts()
         for wanted, exact in (((key, bold, italic), True), ((key, False, False), False)):
-            path = fonts.get(wanted)
-            if path:
-                name = Path(path).stem
+            found = fonts.get(wanted)
+            if found:
+                path, name = found
                 original = clean_font_name(style.font)
                 label = f"{original} → {name}" if exact else f"{original} → {name} (sem ênfase)"
                 css = "sys" + hashlib.sha1(path.encode("utf-8")).hexdigest()[:10]
