@@ -1,5 +1,6 @@
 """Sessões PDF, prioridade de operações e cache de páginas."""
 
+import shutil
 from collections import OrderedDict, deque
 from collections.abc import Callable
 from contextlib import suppress
@@ -49,6 +50,17 @@ class PageFrame:
             result["rotation"],
             result["limited"],
         )
+
+
+CLEANUP_ATTEMPTS = 10
+CLEANUP_INTERVAL_MS = 500
+
+
+def _remove_later(folder: Path, attempts: int) -> None:
+    """Tenta de novo apagar a pasta de revisões ainda presa por um processo que encerra."""
+    shutil.rmtree(folder, ignore_errors=True)
+    if folder.exists() and attempts > 1:
+        QTimer.singleShot(CLEANUP_INTERVAL_MS, lambda: _remove_later(folder, attempts - 1))
 
 
 @dataclass(frozen=True, slots=True)
@@ -824,8 +836,11 @@ class PdfViewer(QObject):
             self.output.finish()
             self.output = None
         if self._scratch:
+            folder = Path(self._scratch.name)
             self._scratch.cleanup()
             self._scratch = None
+            if folder.exists():
+                _remove_later(folder, CLEANUP_ATTEMPTS)
         self._finish_job(self.open_job, cancel=True)
         self.workspace.discard(self)
         self.deleteLater()

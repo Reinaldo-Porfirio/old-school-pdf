@@ -142,4 +142,5 @@ class PdfProcess(QObject):
         self._buffer.clear()
         if self.process.state() != QProcess.ProcessState.NotRunning:
             self.process.kill()
-            self.process.waitForFinished(250)
+            # O Windows só libera as revisões abertas pelo processo quando ele termina.
+            self.process.waitForFinished(2000)

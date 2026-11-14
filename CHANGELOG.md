@@ -1,5 +1,11 @@
 # Alterações
 
+## 0.8.1 · 14/11/2026
+
+- Correção: ao fechar uma aba editada, o programa espera o processo do PDF terminar antes de
+  apagar a pasta temporária de revisões e tenta de novo por alguns segundos se o Windows ainda
+  a mantiver presa. Em máquinas lentas, a 0.8.0 podia deixar essa pasta em %TEMP%.
+
 ## 0.8.0 · 14/11/2026
 
 Inclui o que estava planejado para a 0.7, que não foi publicada separadamente.
