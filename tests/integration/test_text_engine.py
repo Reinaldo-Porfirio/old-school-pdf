@@ -310,3 +310,70 @@ def test_run_dataclass_round_trip():
         "bold": True,
         "italic": False,
     }
+
+
+def pattern_pdf(path):
+    from PySide6.QtCore import QPointF
+    from PySide6.QtGui import (
+        QBrush,
+        QColor,
+        QFont,
+        QLinearGradient,
+        QPageSize,
+        QPainter,
+        QPdfWriter,
+        QPen,
+    )
+
+    writer = QPdfWriter(str(path))
+    writer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
+    writer.setResolution(72)
+    painter = QPainter(writer)
+    gradient = QLinearGradient(QPointF(50, 0), QPointF(400, 0))
+    gradient.setColorAt(0, QColor("#003399"))
+    gradient.setColorAt(1, QColor("#003399"))
+    painter.setPen(QPen(QBrush(gradient), 1))
+    painter.setFont(QFont("Arial", 14))
+    painter.drawText(QPointF(60, 120), "Texto pintado com padrão")
+    painter.setPen(QColor("#000000"))
+    painter.drawText(QPointF(60, 300), "Vizinho comum")
+    painter.end()
+    return path
+
+
+def test_pattern_filled_text_keeps_its_visible_color(qapp, tmp_path):
+    with pymupdf.open(pattern_pdf(tmp_path / "padrao.pdf")) as doc:
+        page = doc[0]
+        target = find(read_blocks(page), "padrão")
+        assert target["styles"][0]["color"] == 0x003399
+        replace_blocks(doc, 0, [edit_of(target, "Texto editado")], {})
+        spans = [
+            span
+            for block in page.get_text("dict")["blocks"]
+            for line in block.get("lines", [])
+            for span in line["spans"]
+            if "editado" in span["text"]
+        ]
+        assert spans and spans[0]["color"] == 0x003399
+
+
+def test_white_on_dark_and_small_black_text_are_not_recoloured():
+    with pymupdf.open() as doc:
+        page = doc.new_page(width=420, height=600)
+        page.draw_rect(pymupdf.Rect(30, 40, 390, 90), color=None, fill=(0.04, 0.14, 0.42))
+        page.insert_text((40, 72), "Título branco", fontsize=16, color=(1, 1, 1))
+        page.insert_text((40, 200), "texto miúdo preto", fontsize=7)
+        blocks = read_blocks(page)
+        assert find(blocks, "Título branco")["styles"][0]["color"] == 0xFFFFFF
+        assert find(blocks, "miúdo")["styles"][0]["color"] == 0x000000
+        replace_blocks(doc, 0, [edit_of(find(blocks, "Título branco"), "Novo título")], {})
+        assert "Novo título" in page_text(page)
+
+
+def test_invisible_white_on_white_text_is_refused():
+    with pymupdf.open() as doc:
+        page = doc.new_page(width=420, height=600)
+        page.insert_text((40, 80), "Texto branco escondido", fontsize=12, color=(1, 1, 1))
+        target = find(read_blocks(page), "escondido")
+        with pytest.raises(OldSchoolPDFError, match="invisível"):
+            replace_blocks(doc, 0, [edit_of(target, "Outro")], {})

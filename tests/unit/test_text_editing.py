@@ -65,3 +65,7 @@ def test_compare_form_and_css_color():
     assert compare_form("Texto  com\n  espaços­") == "Texto com espaços"
     assert css_color(0x1F3556) == "#1f3556"
     assert css_color(-5) == "#000000"
+
+
+def test_compare_form_treats_typographic_hyphens_as_hyphen():
+    assert compare_form("INSP‐2026‑0042") == compare_form("INSP-2026-0042")

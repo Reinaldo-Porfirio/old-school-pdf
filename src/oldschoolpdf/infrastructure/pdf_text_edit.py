@@ -11,7 +11,7 @@ Qualquer divergência interrompe a edição sem gravar a revisão.
 
 import hashlib
 from collections import Counter
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from html import escape
 
 import pymupdf
@@ -48,6 +48,74 @@ PIXEL_MARGIN = 2.5
 PIXEL_THRESHOLD = 48
 PIXEL_TOLERANCE = 0.0008
 EXPAND_MARGIN = 18.0
+SAMPLE_SCALE = 3.0
+# Distâncias entre cores RGB (0 a 441) usadas para decidir se o texto aparece no fundo.
+SAME_COLOR = 40.0
+VISIBLE_INK = 60.0
+BLEND_GAP = 60.0
+PLAIN_BACKGROUND = 0.6
+
+
+def _rgb(value: int) -> tuple[int, int, int]:
+    return (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF
+
+
+def _distance(first: int, second: int) -> float:
+    return sum((a - b) ** 2 for a, b in zip(_rgb(first), _rgb(second), strict=True)) ** 0.5
+
+
+def _sample(page: pymupdf.Page, rect: pymupdf.Rect) -> tuple[int, int, float] | None:
+    """Cor do fundo (a mais comum), da tinta (a mais distante do fundo) e quanto da
+    área é fundo liso (0 a 1)."""
+    clip = (rect * page.rotation_matrix) & page.rect
+    if clip.is_empty or clip.width < 1 or clip.height < 1:
+        return None
+    matrix = pymupdf.Matrix(SAMPLE_SCALE, SAMPLE_SCALE)
+    pixmap = page.get_pixmap(matrix=matrix, clip=clip, colorspace=pymupdf.csRGB, alpha=False)
+    samples = pixmap.samples
+    colors = Counter(
+        (samples[index] << 16) | (samples[index + 1] << 8) | samples[index + 2]
+        for index in range(0, len(samples), 3)
+    )
+    if not colors:
+        return None
+    background, count = colors.most_common(1)[0]
+    ink = max(colors, key=lambda color: _distance(color, background))
+    return background, ink, count / sum(colors.values())
+
+
+def _blend_gap(ink: int, background: int, reported: int) -> float:
+    """Distância da tinta até a mistura fundo→cor informada (a suavização das bordas)."""
+    base, target, point = _rgb(background), _rgb(reported), _rgb(ink)
+    direction = [b - a for a, b in zip(base, target, strict=True)]
+    length = sum(value * value for value in direction)
+    if not length:
+        return _distance(ink, background)
+    step = sum((p - a) * d for p, a, d in zip(point, base, direction, strict=True)) / length
+    step = min(max(step, 0.0), 1.0)
+    closest = [a + step * d for a, d in zip(base, direction, strict=True)]
+    return sum((p - c) ** 2 for p, c in zip(point, closest, strict=True)) ** 0.5
+
+
+def _visible_color(page: pymupdf.Page, span: dict, reported: int) -> int:
+    """Cor que aparece de fato na tela.
+
+    Alguns geradores pintam o texto com padrões de preenchimento e o motor informa
+    outra cor (até igual à do fundo, o que deixaria o texto novo invisível). A cor
+    medida na imagem só substitui a informada quando o fundo é liso, a tinta é
+    visível e ela não pode ser explicada como mistura do fundo com a cor informada.
+    """
+    measured = _sample(page, pymupdf.Rect(span["bbox"]))
+    if measured is None:
+        return reported
+    background, ink, plain = measured
+    if _distance(ink, background) < VISIBLE_INK or plain < PLAIN_BACKGROUND:
+        return reported
+    if _distance(reported, background) < SAME_COLOR:
+        return ink
+    if _blend_gap(ink, background, reported) > BLEND_GAP:
+        return ink
+    return reported
 
 
 def _style(span: dict) -> TextStyle:
@@ -93,6 +161,7 @@ def _scan(page: pymupdf.Page) -> tuple[list[TextBlock], dict[str, list[dict]]]:
     widgets = [pymupdf.Rect(widget.rect) for widget in page.widgets()]
     blocks: list[TextBlock] = []
     spans_by_key: dict[str, list[dict]] = {}
+    colors: dict[TextStyle, int] = {}
     for raw in data["blocks"]:
         if raw.get("type") != 0:
             continue
@@ -114,6 +183,9 @@ def _scan(page: pymupdf.Page) -> tuple[list[TextBlock], dict[str, list[dict]]]:
                 if not span["text"]:
                     continue
                 style = _style(span)
+                if style not in colors:
+                    colors[style] = _visible_color(page, span, style.color)
+                style = replace(style, color=colors[style])
                 if style not in styles:
                     styles.append(style)
                 run = TextRun(_span_text(span), styles.index(style), style.bold, style.italic)
@@ -521,6 +593,12 @@ def _replace(page: pymupdf.Page, edits: list, options: dict) -> dict:
             raise OldSchoolPDFError(
                 "O texto gravado não conferiu com o digitado. A fonte pode não ter algum "
                 "caractere. Nada foi alterado."
+            )
+    for rect, _ in written:
+        measured = _sample(page, rect)
+        if measured is None or _distance(measured[0], measured[1]) < VISIBLE_INK / 2:
+            raise OldSchoolPDFError(
+                "O texto novo ficaria invisível sobre o fundo. Nada foi alterado."
             )
     if _pixels_changed(pixels_before, _snapshot(page), target_rects + new_rects):
         raise OldSchoolPDFError(

@@ -108,6 +108,8 @@ def compare_form(text: str) -> str:
     """Forma usada para conferir o texto gravado: ignora espaços e variações invisíveis."""
     text = unicodedata.normalize("NFKC", text)
     text = text.replace("­", "").replace(" ", " ")
+    # Algumas fontes devolvem o hífen comum como hífen tipográfico; o desenho é o mesmo.
+    text = text.replace("‐", "-").replace("‑", "-")
     return " ".join(text.split())
 
 
