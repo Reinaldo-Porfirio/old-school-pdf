@@ -50,6 +50,14 @@ class PageFrame:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class PrintRequest:
+    """Página da fila de impressão: a posição na sequência e a imagem pedida."""
+
+    index: int
+    spec: RasterRequest
+
+
 class PdfWorkspace(QObject):
     jobs_changed = Signal()
 
@@ -162,6 +170,8 @@ class PdfViewer(QObject):
     export_completed = Signal(bool, str)
     signatures_ready = Signal(object)
     continuous_frame_ready = Signal(object, object)
+    print_frame_ready = Signal(int, object)
+    print_failed = Signal(str)
 
     def __init__(self, path: Path, workspace: PdfWorkspace) -> None:
         super().__init__(workspace)
@@ -203,6 +213,8 @@ class PdfViewer(QObject):
         self._render_pending = False
         self._thumbs: deque[RasterRequest] = deque()
         self._copy: tuple[int, PdfRect | None] | None = None
+        self._printing: deque[PrintRequest] = deque()
+        self.printing = False
         self._inflight: tuple[str, object] | None = None
         self._worker = self._new_worker()
 
@@ -365,6 +377,29 @@ class PdfViewer(QObject):
     def step(self, direction: int) -> None:
         self._queue_command("step", {"direction": direction}, "Restaurando revisão…")
 
+    def print_pages(self, pages: list[int], scale: float) -> bool:
+        """Pede as páginas uma a uma, na escala da impressora e sem passar pelo cache."""
+        if self.state != "ready" or self.busy or not pages or not self.info.can_print:
+            return False
+        self._printing = deque(
+            PrintRequest(index, RasterRequest(page, 0, scale, 0, 0, 1.0))
+            for index, page in enumerate(pages)
+        )
+        self.printing = True
+        self.busy = "Imprimindo…"
+        self.changed.emit()
+        self.workspace.wake(self)
+        return True
+
+    def end_print(self) -> None:
+        """Encerra a impressão: chamado ao concluir, cancelar ou falhar."""
+        if not self.printing:
+            return
+        self._printing.clear()
+        self.printing = False
+        self.busy = ""
+        self.changed.emit()
+
     def export(
         self,
         task: PdfOutputTask,
@@ -516,6 +551,9 @@ class PdfViewer(QObject):
             if operation == "export":
                 self.output.start()
             return self._send(operation, arguments)
+        if self._printing and self.state == "ready":
+            request = self._printing.popleft()
+            return self._send("render", asdict(request.spec), request)
         if self.state != "ready" or not self.active:
             return False
         if self._render_pending:
@@ -562,6 +600,10 @@ class PdfViewer(QObject):
                 self._operation_error(operation, token, reply["error"])
             elif operation in ("open", "password"):
                 self._opened(reply["result"])
+            elif operation == "render" and isinstance(token, PrintRequest):
+                if self.printing:
+                    frame = PageFrame.from_reply(reply["result"], data)
+                    self.print_frame_ready.emit(token.index, frame)
             elif operation == "render":
                 frame = PageFrame.from_reply(reply["result"], data)
                 self.workspace.remember(self.session.session_id, token, frame)
@@ -655,7 +697,10 @@ class PdfViewer(QObject):
         self.search_job = None
 
     def _operation_error(self, operation: str, token, error: str) -> None:
-        if operation in ("open", "password"):
+        if isinstance(token, PrintRequest):
+            if self.printing:
+                self.print_failed.emit(error)
+        elif operation in ("open", "password"):
             self._fatal(error)
         elif operation == "export":
             self._finish_export(error)
@@ -690,6 +735,10 @@ class PdfViewer(QObject):
         self.workspace.invalidate(self.session.session_id)
         if self.output:
             self._finish_export(error)
+        if self.printing:
+            self.print_failed.emit(error)
+            self._printing.clear()
+            self.printing = False
         self.busy = ""
         self._command = None
         self._finish_job(self.open_job, error=error)
@@ -707,6 +756,10 @@ class PdfViewer(QObject):
         self.state = "closed"
         self._password = None
         self._inflight = None
+        if self.printing:
+            self._printing.clear()
+            self.printing = False
+            self.print_failed.emit("A aba foi fechada durante a impressão.")
         self.cancel_search()
         self._worker.stop()
         if self.output:

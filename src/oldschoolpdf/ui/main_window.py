@@ -46,10 +46,11 @@ from oldschoolpdf.ui.dialogs import PreferencesDialog
 from oldschoolpdf.ui.docks import JobsDock, NavigationDock, PropertiesDock
 from oldschoolpdf.ui.document_tools import DocumentTools
 from oldschoolpdf.ui.edit_dialogs import local_pdf_drops
-from oldschoolpdf.ui.icons import command_icon
+from oldschoolpdf.ui.icons import app_icon, command_icon
 from oldschoolpdf.ui.media_tools import MEDIA_ACTIONS, MediaTools
 from oldschoolpdf.ui.pages import CapabilitiesPage, GuidePage, HomePage
 from oldschoolpdf.ui.pdf_tab import ZOOM_LEVELS, PdfTab
+from oldschoolpdf.ui.print_tools import PrintTools
 from oldschoolpdf.ui.security_tools import SecurityTools
 from oldschoolpdf.ui.themes import apply_theme
 
@@ -64,7 +65,6 @@ class FutureCommand:
 
 
 FUTURE_COMMANDS = (
-    FutureCommand("print", "Imprimir…", "print", "posterior", "Ctrl+P"),
     FutureCommand(
         "office", "Converter via LibreOffice…", "document", "opcional · validação pendente"
     ),
@@ -101,6 +101,7 @@ class MainWindow(QMainWindow):
         self.document_tools = DocumentTools(self)
         self.media_tools = MediaTools(self)
         self.security_tools = SecurityTools(self)
+        self.print_tools = PrintTools(self)
         self._active_pdf: PdfTab | None = None
         self.setAcceptDrops(True)
         self.preferences = settings.load_preferences()
@@ -109,7 +110,7 @@ class MainWindow(QMainWindow):
         self.toolbars: list[QToolBar] = []
         self.resize(1320, 880)
         self.setMinimumSize(1040, 700)
-        self.setWindowIcon(command_icon("document"))
+        self.setWindowIcon(app_icon())
         self.setDockOptions(
             QMainWindow.DockOption.AnimatedDocks
             | QMainWindow.DockOption.AllowNestedDocks
@@ -189,6 +190,13 @@ class MainWindow(QMainWindow):
             "guide", self.tr("&Guia do aplicativo"), "info", lambda: self.open_page("guide")
         )
         self._action("open", self.tr("&Abrir PDF…"), "open", self._open_pdf_dialog)
+        printing = self._action(
+            "print",
+            self.tr("&Imprimir…"),
+            "print",
+            lambda: self._with_pdf(self.print_tools.print_document),
+        )
+        printing.setEnabled(False)
         self._action(
             "capabilities",
             self.tr("&Recursos locais"),
@@ -345,6 +353,7 @@ class MainWindow(QMainWindow):
         self.jobs_dock.cancel_requested.connect(self.pdf_workspace.cancel_job)
         self.jobs_dock.cancel_requested.connect(self.document_tools.cancel_merge)
         self.jobs_dock.cancel_requested.connect(self.media_tools.runner.cancel)
+        self.jobs_dock.cancel_requested.connect(self.print_tools.cancel)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.navigation_dock)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.properties_dock)
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.jobs_dock)
@@ -734,6 +743,7 @@ class MainWindow(QMainWindow):
         annotating = bool(ready and info.can_annotate and (tab.canvas.has_page or continuous))
         obj = tab.annotation() if annotating else None
         self.security_tools.update_controls(tab)
+        self.print_tools.update_controls(tab)
         for key in (
             "find",
             "zoom_in",

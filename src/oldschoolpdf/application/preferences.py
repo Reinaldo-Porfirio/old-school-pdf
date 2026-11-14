@@ -19,6 +19,8 @@ EDITOR_SHORTCUTS = {
     "undo": "Ctrl+Z",
     "redo": "Ctrl+Y",
     "redact": "Ctrl+Alt+R",
+    "print": "Ctrl+P",
+    "edit_text": "Ctrl+E",
 }
 
 DEFAULT_SHORTCUTS = {

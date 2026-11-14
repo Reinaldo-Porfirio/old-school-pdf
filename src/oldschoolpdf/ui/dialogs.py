@@ -44,6 +44,8 @@ ACTION_LABELS = {
     "undo": "Desfazer edição do PDF",
     "redo": "Refazer edição do PDF",
     "redact": "Marcar área para redação",
+    "print": "Imprimir",
+    "edit_text": "Editar texto do PDF",
 }
 
 
