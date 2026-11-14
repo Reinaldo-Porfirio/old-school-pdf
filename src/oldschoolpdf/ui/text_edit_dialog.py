@@ -1,6 +1,7 @@
 """Editor do texto original do PDF: a página e a cópia editada, lado a lado."""
 
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import asdict
 
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
@@ -392,10 +393,8 @@ class TextEditDialog(QDialog):
             (self.viewer.text_edited, self._applied),
             (self.viewer.text_edit_failed, self._failed),
         ):
-            try:
+            with suppress(RuntimeError, TypeError):
                 signal.disconnect(slot)
-            except (RuntimeError, TypeError):
-                continue
 
     def _busy(self, text: str) -> None:
         working = self.working = bool(text)

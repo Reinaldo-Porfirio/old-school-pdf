@@ -1,5 +1,26 @@
 # Alterações
 
+## 0.8.0 · 14/11/2026
+
+Inclui o que estava planejado para a 0.7, que não foi publicada separadamente.
+
+- **Impressão** (Ctrl+P): diálogo do sistema com intervalo, página atual, cópias e ordem; páginas
+  renderizadas na resolução da impressora (até 300 DPI, ou 150 DPI quando o PDF só permite
+  impressão em baixa qualidade), ajustadas ao papel e giradas quando a orientação difere; tarefa
+  na fila com progresso e cancelamento; respeita a permissão de impressão do PDF.
+- **Edição do texto original** (Ctrl+E): editor lado a lado com a página e os blocos numerados,
+  negrito e itálico, vários blocos por vez, prévia verificada e aplicação como revisão desfazível.
+- Motor de edição com verificações: remoção só da faixa central das letras, conferência de que
+  nenhum texto vizinho foi afetado, escrita numa página gêmea com fontes reduzidas a subconjunto,
+  reanexação de links, conferência do texto gravado, da cor visível, dos pixels fora da área, dos
+  links e das anotações. Qualquer divergência cancela a edição.
+- Fontes: a mesma família instalada no Windows substitui fontes em subconjunto, respeitando a
+  permissão de incorporação de cada fonte; sem ela, uma fonte padrão parecida.
+- Texto que não cabe: reduzir até 85% ou 70% e expandir o bloco para baixo até o próximo conteúdo.
+- Recusas explicadas: texto invisível de OCR, girado, sobre campo de formulário, da direita para
+  a esquerda, e PDFs sem permissão de alterar conteúdo.
+- A janela principal usa o ícone do aplicativo.
+
 ## 0.6.1 · 10/11/2026
 
 - O executável e o instalador passam a incluir os textos da LGPL-3.0 e da GPL-3.0 (Qt),

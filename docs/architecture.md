@@ -155,3 +155,30 @@ testes visuais em outras escalas/tecnologias assistivas permanecem necessários.
 Toda string visível é pt-BR; widgets usam `tr` nos pontos principais e a composição
 carrega a tradução Qt pt-BR. Um catálogo próprio de outro idioma ainda não foi
 criado; preparar QTranslator não equivale a entregar interface em inglês.
+
+## Impressão (0.8)
+
+`ui/print_tools.py` mostra o diálogo do sistema e calcula a sequência de páginas (intervalo,
+ordem e cópias quando o driver não as faz). `PdfViewer.print_pages` pede cada página ao
+processo do PDF pela operação `render`, com a escala da impressora e sem passar pelo cache da
+tela. `PrintJob` desenha cada imagem no `QPrinter`, ajustada e girada conforme o papel, e
+registra progresso e cancelamento na fila. A resolução fica limitada pela permissão de
+impressão do PDF.
+
+## Edição do texto original (0.8)
+
+`domain/text_editing.py` concentra as regras sem Qt nem PyMuPDF: validação do texto digitado,
+reconstrução de parágrafos, alinhamento, comparação e chaves de família de fonte.
+`infrastructure/pdf_text_edit.py` lê os blocos (`read_blocks`) e aplica as trocas
+(`replace_blocks`). `infrastructure/system_fonts.py` indexa as fontes do Windows lendo só as
+tabelas `name` e `OS/2` e descarta as que proíbem incorporação ou subconjunto.
+
+O processo do PDF expõe `text_blocks` (blocos e imagem da página), `preview_text` (edição numa
+cópia descartável e imagem do resultado) e a ação `replace_text` em `edit`, que grava uma
+revisão como as demais edições. `replace_blocks` sempre roda numa cópia da revisão: com a
+página temporariamente a 0°, apaga a faixa central de cada trecho por redação sem
+preenchimento, confere os vizinhos, escreve numa página gêmea com as fontes reduzidas a
+subconjunto e a sobrepõe à real, reanexa links desanexados pela redação e confere texto, cor
+visível, pixels fora da área, links e anotações. Qualquer divergência levanta erro e a revisão
+não é criada. O diálogo `ui/text_edit_dialog.py` guarda o estilo de cada trecho numa
+propriedade do formato de caractere do Qt e envia os trechos como dados, nunca como HTML.

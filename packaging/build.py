@@ -99,15 +99,28 @@ def test_frozen_worker() -> None:
             found, _ = ask("search", page=0, query="empacotado", limit=10)
             # Carrega pyHanko e lxml dentro do executável.
             signatures, _ = ask("verify_signatures", trust_paths=[])
+            # Edição de texto: fontes do sistema, verificação e página gêmea no executável.
+            blocks, _ = ask("text_blocks", page=0, width=400, height=500, dpr=1.0)
+            block = blocks["result"]["blocks"][0] if "result" in blocks else None
+            edit = (
+                [{"key": block["key"], "runs": [dict(block["runs"][0], text="Editado no .exe")]}]
+                if block
+                else []
+            )
+            preview, preview_pixels = ask(
+                "preview_text", page=0, blocks=edit, options={}, width=400, height=500, dpr=1.0
+            )
         finally:
             worker.stdin.close()
             worker.wait(timeout=30)
         problems = [
-            reply["error"] for reply in (opened, frame, found, signatures) if "error" in reply
+            reply["error"]
+            for reply in (opened, frame, found, signatures, blocks, preview)
+            if "error" in reply
         ]
-        if problems or not pixels:
+        if problems or not pixels or not preview_pixels:
             raise SystemExit(f"O leitor empacotado falhou: {problems or 'imagem vazia'}")
-    print("Leitor empacotado abriu, renderizou, pesquisou e verificou assinaturas.")
+    print("Leitor empacotado abriu, renderizou, pesquisou, verificou assinaturas e editou texto.")
     bundled = {path.name.split("-")[0].lower() for path in APP_DIR.glob("_internal/*.dist-info")}
     if missing := {"pymupdf", "pyhanko"} - bundled:
         raise SystemExit(f"Metadados ausentes no pacote: {sorted(missing)}")

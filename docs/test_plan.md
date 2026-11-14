@@ -55,6 +55,27 @@ mesclagem e divisão em lote e confirmação de risco de assinatura. A suíte us
 Casos adicionais verificam cancelamento da redação durante o progresso,
 limpeza das marcas ao mudar de revisão e disponibilidade sem `signing`.
 
+## Impressão e edição de texto (0.8)
+
+| Caso | Verificação |
+|---|---|
+| Impressão completa, intervalo, página atual e cópias | `tests/gui/test_print.py` imprime em PDF e confere páginas e conteúdo |
+| Página deitada em papel em pé | A página é girada e não sai em branco |
+| PDF sem permissão de impressão ou só em baixa qualidade | Comando desativado ou resolução limitada a 150 DPI |
+| Cancelamento e encerramento da aba durante a impressão | Tarefa cancelada ou falha explicada, sem aba presa |
+| Troca de texto com vizinho de entrelinha apertada | `tests/integration/test_text_engine.py`: vizinhos idênticos |
+| Página girada (0°, 90°, 180°, 270°) e com área de corte | Texto novo na mesma posição e direção |
+| Texto que não cabe, redução e expansão até o próximo bloco | Recusa clara, redução ou expansão limitadas |
+| OCR invisível, texto girado, campo de formulário, direita para a esquerda | Bloco não editável com motivo |
+| Links, anotações e imagem de fundo | Preservados; link desanexado é reanexado |
+| Reeditar um bloco já editado, apagar um bloco, dois blocos por vez | Resultado conferido |
+| Fonte em subconjunto com negrito | Mesma família instalada, com ênfase preservada |
+| Texto com padrão de preenchimento, branco sobre escuro, preto miúdo | Cor visível correta; branco sobre branco recusado |
+| Editor lado a lado | `tests/gui/test_text_editor.py`: prévia, aplicar, desfazer, negrito, assinatura, descarte |
+
+Verificação manual recomendada antes de publicar: PDFs reais gerados por Word, navegadores e
+digitalizadores, editando um bloco de cada tipo e conferindo a prévia.
+
 ## Regressão do M0
 
 - Inicialização: QApplication real, QMainWindow, nove menus, três barras, três

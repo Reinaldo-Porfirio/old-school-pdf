@@ -1,4 +1,4 @@
-# Avisos de terceiros · Old School PDF 0.6.1
+# Avisos de terceiros · Old School PDF 0.8.0
 
 Atualizado em 10/11/2026. O código do Old School PDF usa **AGPL-3.0-or-later**.
 Cada componente de terceiros mantém os termos de quem o publicou. O `uv.lock`
@@ -101,7 +101,7 @@ são gerados por `packaging/build.py`. O executável contém:
   separados em `_internal/PySide6` e podem ser substituídas por versões compatíveis
   modificadas pelo usuário. Os textos da LGPL-3.0 e da GPL-3.0 vão em `_internal/licenses`;
 - **PyMuPDF e MuPDF** sob AGPL-3.0. O código-fonte completo e correspondente do
-  aplicativo é este repositório, na tag da versão (por exemplo, `v0.6.1`);
+  aplicativo é este repositório, na tag da versão (por exemplo, `v0.8.0`);
 - **pyHanko** e as dependências da tabela acima, com os arquivos de licença de cada
   pacote em `_internal/*.dist-info`;
 - **setuptools** 84.2.1 (MIT), incluído pelo PyInstaller como dependência de execução.
@@ -153,6 +153,14 @@ do aplicativo distribuído. uv 0.12.5 é a ferramenta externa de instalação
 As actions da CI estão fixadas por commit: actions/checkout v7.0.1, actions/setup-python
 v7.1.0, actions/upload-artifact v7.0.2 e astral-sh/setup-uv v10.3.3, todas MIT. Elas
 são ferramentas do workflow, não componentes do aplicativo.
+
+## Fontes usadas na edição de texto
+
+Ao editar o texto de um PDF, o programa pode embutir no documento um subconjunto (só as letras
+usadas) de uma fonte instalada no Windows do próprio usuário, da mesma família da fonte
+original. Fontes cuja licença declara incorporação restrita, proíbe subconjunto ou só traz
+bitmaps (campo `fsType` da tabela OS/2) são ignoradas. Nenhuma fonte é distribuída com o
+programa para essa função; sem uma fonte instalada adequada, usa-se uma fonte padrão do MuPDF.
 
 ## Assets
 

@@ -51,6 +51,28 @@ escolher uma diretamente.
 - PDFs com indicação de assinatura digital pedem confirmação antes da edição ou
   exportação. A janela informa o risco de invalidar a assinatura na cópia.
 
+## Editar o texto original
+
+Use **Editar > Editar texto do PDF** (Ctrl+E). A página aparece à esquerda com os blocos de
+texto numerados; clique num bloco ou escolha na lista. Edite o texto à direita. **Negrito** e
+**Itálico** valem para o trecho selecionado. Altere quantos blocos quiser e use **Gerar
+prévia** para ver a cópia editada na aba ao lado. **Aplicar ao PDF** grava uma revisão nova,
+desfeita com Ctrl+Z, e **Restaurar bloco** desfaz as mudanças de um bloco antes de aplicar.
+
+Se o texto novo não couber, escolha reduzir a fonte até 85% ou 70% ou expandir o bloco para
+baixo, até o próximo conteúdo. A opção **Usar as fontes instaladas no Windows** deixa o
+resultado mais fiel ao original. Blocos tracejados não podem ser editados; passe o mouse sobre
+eles na lista para ver o motivo. Páginas digitalizadas não têm texto editável.
+
+Antes de gravar, o programa confere o texto escrito, o restante da página, a cor, os links e
+as anotações. Se algo divergir, aparece uma mensagem e nada é alterado.
+
+## Imprimir
+
+**Arquivo > Imprimir** (Ctrl+P) abre o diálogo do Windows. Escolha a impressora, o intervalo,
+a página atual ou todas, as cópias e a ordem. Cada página é ajustada ao papel. A impressão
+aparece na fila de tarefas, onde pode ser cancelada.
+
 ## Gravar e fechar
 
 **Ctrl+Z** e **Ctrl+Y** alternam entre as revisões. A aba marca alterações pendentes

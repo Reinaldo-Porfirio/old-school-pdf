@@ -19,8 +19,8 @@ completos. Nada de minimalismo.
 
 | Arquivo | Para quem |
 |---|---|
-| [**OldSchoolPDF-0.6.1-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.6.1/OldSchoolPDF-0.6.1-setup.exe) (≈ 43 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
-| [**OldSchoolPDF-0.6.1-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.6.1/OldSchoolPDF-0.6.1-sem-instalar.zip) (≈ 58 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
+| [**OldSchoolPDF-0.8.0-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.8.0/OldSchoolPDF-0.8.0-setup.exe) (≈ 43 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
+| [**OldSchoolPDF-0.8.0-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.8.0/OldSchoolPDF-0.8.0-sem-instalar.zip) (≈ 58 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
 
 **Requisitos:** Windows 10 ou 11 de 64 bits e cerca de 130 MB livres em disco. Não precisa
 de Python, de conta nem de internet. Foi testado no Windows 11. O Windows 10 é aceito,
@@ -30,13 +30,17 @@ mas ainda não foi testado.
 > código, então o SmartScreen avisa na primeira vez. Clique em **Mais informações >
 > Executar assim mesmo**. Para conferir se o arquivo é o original, compare o
 > SHA-256 com o publicado na [página da versão](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/latest)
-> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.6.1-setup.exe`).
+> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.8.0-setup.exe`).
 
 ## O que ele faz
 
 - **Ler:** abas, miniaturas, zoom, rolagem contínua, busca com acentos e cópia de texto.
 - **Organizar:** mesclar, dividir, extrair, reordenar arrastando miniaturas, girar e excluir páginas.
 - **Anotar:** destaque, sublinhado, comentários, caixas de texto, carimbos, formas e imagens.
+- **Editar o texto original:** troca o texto de parágrafos, títulos e valores direto no PDF,
+  com prévia lado a lado, negrito e itálico, a mesma fonte do documento quando ela estiver
+  instalada no Windows e verificação automática do resultado ([como funciona](#editar-o-texto-do-pdf)).
+- **Imprimir:** diálogo do Windows com intervalo, cópias e ajuste automático ao papel.
 - **Formulários:** preenche campos AcroForm compatíveis.
 - **Converter:** imagens para PDF, PDF para PNG/JPEG, extração de texto e imagens, compactação e lotes.
 - **OCR local:** torna pesquisáveis os PDFs digitalizados, em português e inglês ([veja como ativar](#ativar-o-ocr)).
@@ -122,11 +126,38 @@ sozinho, para diagnóstico.
   indique a área na página. Selecione uma anotação para mover, editar o texto
   ou excluí-la conforme o tipo. O comando **Preencher formulário** lista os
   campos da página atual.
+- **Ctrl+P** imprime com o diálogo do Windows: intervalo, página atual, cópias e ordem.
+  Páginas deitadas giram para ocupar o papel. A impressão aparece na fila e pode ser cancelada.
 - **Ctrl+Z** e **Ctrl+Y** percorrem as revisões. **Ctrl+Shift+S** grava um PDF
   separado. Um asterisco indica alterações pendentes. A fila permite cancelar
   exportações antes da publicação.
 - **Exibir > Rolagem contínua** permite percorrer várias páginas no mesmo painel.
 - `F1` abre a ajuda local. A lista de atalhos está em **Ferramentas > Preferências**.
+
+## Editar o texto do PDF
+
+![Editor de texto lado a lado](docs/screenshots/editor-de-texto.png)
+
+**Editar → Editar texto do PDF** (Ctrl+E) mostra a página com os blocos de texto numerados.
+Escolha um bloco, edite à direita e confira em **Gerar prévia**. **Aplicar ao PDF** cria uma
+revisão nova, que pode ser desfeita com Ctrl+Z; o arquivo original nunca é alterado.
+
+Como a edição é feita com segurança:
+
+1. Apaga só a faixa central das letras do bloco, sem pintar nada por cima, preservando fundos,
+   imagens e o texto vizinho.
+2. Confere que o bloco sumiu por inteiro e que nenhum outro texto foi afetado.
+3. Escreve o texto novo no mesmo lugar com a mesma família de fonte, usando a versão completa
+   instalada no Windows quando o PDF só trouxer um pedaço dela (fontes cuja licença proíbe
+   incorporação são ignoradas). Só as letras usadas são embutidas.
+4. Confere o texto gravado, os pixels fora da área editada, a cor visível, os links e as
+   anotações. Se algo divergir, a edição é cancelada e nada muda.
+
+Se o texto novo for maior, escolha reduzir a fonte (até 85% ou 70%) ou expandir o bloco para
+baixo até o próximo conteúdo. Não podem ser editados: páginas digitalizadas (o texto é
+imagem), a camada invisível do OCR, texto girado ou vertical, texto sobre campos de formulário
+e escrita da direita para a esquerda. Tabelas e colunas funcionam bloco a bloco. Editar um PDF
+assinado digitalmente invalida a assinatura; o programa avisa antes.
 
 ## Proteger, redigir e assinar cópias
 

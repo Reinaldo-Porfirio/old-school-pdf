@@ -1,6 +1,6 @@
 import pymupdf
 import pytest
-from PySide6.QtCore import QPointF, Qt
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QMessageBox
 
@@ -144,7 +144,6 @@ def test_clicking_the_page_selects_a_block(window, qtbot, tmp_path):
     qtbot.mouseClick(preview, Qt.MouseButton.LeftButton, pos=box.center().toPoint())
     assert dialog.current == index and preview.selected == index
     assert dialog.list.currentRow() == index
-    assert QPointF(box.center()) is not None
 
 
 def test_text_that_does_not_fit_keeps_dialog_open(window, qtbot, tmp_path):

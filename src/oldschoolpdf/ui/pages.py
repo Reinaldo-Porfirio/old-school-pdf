@@ -48,6 +48,23 @@ Selecione o destaque, sublinhado, caixa de texto, carimbo, forma ou imagem e arr
 a página. Clique para posicionar um comentário. Esc cancela a ferramenta ativa.
 Selecione uma anotação na página ou no painel para mover, editar seu texto ou excluí-la,
 conforme o tipo. Para campos AcroForm compatíveis, use Preencher formulário na página do campo.</p>
+<h2>Editar o texto original</h2>
+<p>Use <b>Editar → Editar texto do PDF</b> (Ctrl+E). A página aparece à esquerda com os
+blocos de texto numerados. Clique num bloco, edite o texto à direita e use Negrito e Itálico
+se precisar. Vários blocos podem ser alterados e aplicados de uma vez. <b>Gerar prévia</b>
+mostra a cópia editada antes de gravar; <b>Aplicar ao PDF</b> cria uma revisão nova, que pode
+ser desfeita com Ctrl+Z.</p>
+<p>O programa apaga só o texto do bloco e escreve o novo no mesmo lugar, usando a mesma família
+de fonte instalada no Windows quando existir. Depois confere o texto gravado, o resto da página,
+os links e as anotações; se algo divergir, nada é alterado. Se o texto novo não couber, escolha
+reduzir a fonte ou expandir o bloco para baixo. Blocos tracejados não podem ser editados:
+texto invisível de OCR, texto girado, texto sobre campos de formulário ou páginas
+digitalizadas sem texto.</p>
+<h2>Imprimir</h2>
+<p><b>Arquivo → Imprimir</b> (Ctrl+P) abre o diálogo do Windows, com intervalo de páginas,
+página atual, cópias e ordem. Cada página é ajustada ao papel e girada quando a orientação
+difere. A impressão aparece na fila de tarefas e pode ser cancelada. PDFs que proíbem
+impressão deixam o comando desativado.</p>
 <h2>Gravar a cópia de trabalho</h2>
 <p>Ctrl+Z e Ctrl+Y percorrem as revisões da aba. O asterisco no nome da aba indica alterações
 pendentes. Use <b>Arquivo → Salvar como</b> (Ctrl+Shift+S) e escolha um destino separado.
@@ -181,8 +198,9 @@ class HomePage(QScrollArea):
             ("M3", "Anotações e formulários", "Concluído"),
             ("M4", "OCR, conversão e lotes", "Concluído"),
             ("M5", "Segurança e assinaturas locais", "Concluído"),
-            ("M6", "Visual Clássico 2000, novo nome e instalador", "Versão atual"),
-            ("M7", "Publicação e atualizações", "Futuro"),
+            ("M6", "Visual Clássico 2000, novo nome e instalador", "Concluído"),
+            ("M7", "Impressão e edição do texto original", "Versão atual"),
+            ("M8", "Mais temas e edição de texto em colunas", "Futuro"),
         ):
             QTreeWidgetItem(roadmap, row)
         roadmap.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
