@@ -49,6 +49,12 @@ PIXEL_MARGIN = 2.5
 PIXEL_THRESHOLD = 48
 PIXEL_TOLERANCE = 0.0008
 EXPAND_MARGIN = 18.0
+# Folga máxima abaixo do bloco, em tamanhos de fonte, para caber a altura da linha.
+LINE_SLACK = 0.45
+# Margem lateral mínima ao alargar um bloco.
+SIDE_MARGIN = 36.0
+# Distância mínima, em alturas de linha, entre linhas lado a lado tratadas como colunas.
+SIDE_GAP = 1.0
 # Páginas novas que uma edição pode criar para o texto que não coube.
 MAX_CONTINUATION_PAGES = 20
 SAMPLE_SCALE = 3.0
@@ -157,6 +163,40 @@ def _hidden_regions(page: pymupdf.Page) -> list[pymupdf.Rect]:
     return regions
 
 
+def _line_groups(lines: list[dict]) -> list[list[dict]]:
+    """Linhas lado a lado viram blocos separados: células de tabela, marcador e item.
+
+    O MuPDF costuma juntar uma linha inteira de tabela, ou a tabela toda, num bloco só.
+    Reescrever esse bloco como parágrafo desmancharia as colunas.
+    """
+    boxes = [pymupdf.Rect(line["bbox"]) for line in lines]
+    for index, first in enumerate(boxes):
+        for second in boxes[index + 1 :]:
+            overlap = min(first.y1, second.y1) - max(first.y0, second.y0)
+            gap = max(second.x0 - first.x1, first.x0 - second.x1)
+            if overlap > 0.5 * min(first.height, second.height) and gap > SIDE_GAP * max(
+                first.height, second.height
+            ):
+                return [[line] for line in lines]
+    return [lines]
+
+
+def _alignment(
+    page: pymupdf.Page, lines: list[dict], bbox: pymupdf.Rect, left: float, right: float
+) -> str:
+    """Alinhamento do bloco; numa linha só, compara com o centro e as margens da página."""
+    edges = [(pymupdf.Rect(line["bbox"]).x0, pymupdf.Rect(line["bbox"]).x1) for line in lines]
+    if len(lines) > 1:
+        return detect_alignment(edges, bbox.x0, bbox.x1)
+    width = page.rect.width
+    middle = (page.rect.x0 + page.rect.x1) / 2
+    if abs((bbox.x0 + bbox.x1) / 2 - middle) < width * 0.02 and bbox.x0 > left + 18:
+        return "center"
+    if abs(bbox.x1 - right) < 2 and bbox.x0 > left + width * 0.25:
+        return "right"
+    return "left"
+
+
 def _scan(page: pymupdf.Page) -> tuple[list[TextBlock], dict[str, list[dict]]]:
     """Blocos de texto da página e, por chave, os trechos brutos usados na remoção."""
     data = page.get_text("dict", flags=TEXT_FLAGS)
@@ -165,12 +205,17 @@ def _scan(page: pymupdf.Page) -> tuple[list[TextBlock], dict[str, list[dict]]]:
     blocks: list[TextBlock] = []
     spans_by_key: dict[str, list[dict]] = {}
     colors: dict[TextStyle, int] = {}
+    groups = []
     for raw in data["blocks"]:
         if raw.get("type") != 0:
             continue
         lines = [line for line in raw.get("lines", []) if _line_text(line).strip()]
-        if not lines:
-            continue
+        if lines:
+            groups.extend(_line_groups(lines))
+    edges = [pymupdf.Rect(line["bbox"]) for group in groups for line in group]
+    margin_left = min((box.x0 for box in edges), default=page.rect.x0)
+    margin_right = max((box.x1 for box in edges), default=page.rect.x1)
+    for lines in groups:
         bbox = pymupdf.Rect(lines[0]["bbox"])
         for line in lines[1:]:
             bbox |= pymupdf.Rect(line["bbox"])
@@ -226,7 +271,9 @@ def _scan(page: pymupdf.Page) -> tuple[list[TextBlock], dict[str, list[dict]]]:
             for a, b in zip(lines, lines[1:], strict=False)
         ]
         size = max(style.size for style in styles) or 11.0
-        spacing = sorted(heights)[len(heights) // 2] / size if heights else 1.2
+        # Numa linha só, a altura da linha original: com 1,2 o texto igual já não caberia.
+        spacing = sorted(heights)[len(heights) // 2] / size if heights else bbox.height / size
+        spacing = spacing if heights else min(spacing, 1.2)
         blocks.append(
             TextBlock(
                 key=key,
@@ -235,14 +282,7 @@ def _scan(page: pymupdf.Page) -> tuple[list[TextBlock], dict[str, list[dict]]]:
                 text=text,
                 runs=tuple(runs),
                 styles=tuple(styles),
-                align=detect_alignment(
-                    [
-                        (pymupdf.Rect(line["bbox"]).x0, pymupdf.Rect(line["bbox"]).x1)
-                        for line in lines
-                    ],
-                    bbox.x0,
-                    bbox.x1,
-                ),
+                align=_alignment(page, lines, bbox, margin_left, margin_right),
                 line_height=round(min(max(spacing, 1.0), 2.5), 3),
                 editable=not reason,
                 reason=reason,
@@ -346,19 +386,93 @@ def _html(runs: list[TextRun], styles: tuple[TextStyle, ...], fonts: dict) -> st
     return "".join(paragraphs)
 
 
+def _place(
+    page: pymupdf.Page,
+    rect: pymupdf.Rect,
+    html: str,
+    css: str,
+    archive: pymupdf.Archive,
+    scale_low: float,
+    text: str,
+) -> tuple[float, float, bytes | None]:
+    """Escreve o texto numa página gêmea e confere que ele saiu inteiro.
+
+    O MuPDF às vezes diz que o texto coube (sobra zero) e descarta as últimas linhas em
+    silêncio. Por isso o texto da página gêmea é comparado com o digitado; se faltar
+    algo, tenta com o retângulo um pouco mais baixo, o que força uma redução maior
+    quando ela é permitida, e por fim responde que não coube.
+    """
+    expected = compare_form(text)
+    for factor in (1.0, 0.97, 0.93):
+        trial = pymupdf.Rect(rect.x0, rect.y0, rect.x1, rect.y0 + rect.height * factor)
+        with pymupdf.open() as twin:
+            twin_page = twin.new_page(width=page.mediabox.width, height=page.mediabox.height)
+            twin_page.set_mediabox(page.mediabox)
+            twin_page.set_cropbox(page.cropbox)
+            spare, scale = twin_page.insert_htmlbox(
+                trial, html, css=css, archive=archive, scale_low=scale_low
+            )
+            if spare < 0:
+                return spare, scale, None
+            if compare_form(_written_text(twin_page, rect)) == expected:
+                twin.subset_fonts()
+                return spare, scale, twin.tobytes(garbage=3, deflate=True)
+        if scale_low >= 1:
+            break
+    return -1.0, scale_low, None
+
+
+def _font_setup(
+    block: TextBlock,
+    runs: list[TextRun],
+    align: str,
+    system: bool,
+    archive: pymupdf.Archive,
+    archived: set[str],
+) -> tuple[dict, str, str]:
+    """Fontes de cada trecho, o CSS com as fontes embutidas e o HTML do bloco."""
+    fonts = {}
+    faces = []
+    for run in runs:
+        key = (run.style, run.bold, run.italic)
+        if key in fonts:
+            continue
+        choice = resolve_font(block.styles[run.style], run.bold, run.italic, use_system=system)
+        fonts[key] = choice
+        if choice.path:
+            name = choice.css + ".font"
+            if name not in archived:
+                with open(choice.path, "rb") as stream:
+                    archive.add(stream.read(), name)
+                archived.add(name)
+            faces.append(f"@font-face{{font-family:'{choice.css}';src:url({name});}}")
+    css = "".join(dict.fromkeys(faces)) + (
+        f"p{{margin:0;}} body{{margin:0;text-align:{align};line-height:{block.line_height};}}"
+    )
+    return fonts, css, _html(runs, block.styles, fonts)
+
+
+def _renders_exactly(
+    page: pymupdf.Page, html: str, css: str, archive: pymupdf.Archive, text: str
+) -> bool:
+    """O texto escrito com estas fontes é lido de volta igual ao digitado?"""
+    with pymupdf.open() as twin:
+        big = pymupdf.Rect(0, 0, max(page.rect.width, 200), 14_000)
+        twin_page = twin.new_page(width=big.width, height=big.height)
+        spare, _ = twin_page.insert_htmlbox(big, html, css=css, archive=archive, scale_low=1)
+        return spare >= 0 and compare_form(twin_page.get_text("text")) == compare_form(text)
+
+
 def _measure(
     page: pymupdf.Page,
     rect: pymupdf.Rect,
     html: str,
     css: str,
     archive: pymupdf.Archive,
+    text: str,
 ) -> float:
     """Sobra de altura do texto no retângulo, sem reduzir a fonte nem gravar nada."""
-    with pymupdf.open() as twin:
-        twin_page = twin.new_page(width=page.mediabox.width, height=page.mediabox.height)
-        twin_page.set_mediabox(page.mediabox)
-        twin_page.set_cropbox(page.cropbox)
-        spare, _ = twin_page.insert_htmlbox(rect, html, css=css, archive=archive, scale_low=1)
+    spare, _, _ = _place(page, rect, html, css, archive, 1, text)
     return spare
 
 
@@ -369,28 +483,31 @@ def _stamp(
     css: str,
     archive: pymupdf.Archive,
     scale_low: float,
+    text: str,
 ) -> tuple[float, float]:
     """Escreve numa página gêmea, reduz as fontes novas e sobrepõe à página real."""
-    with pymupdf.open() as twin:
-        twin_page = twin.new_page(width=page.mediabox.width, height=page.mediabox.height)
-        twin_page.set_mediabox(page.mediabox)
-        twin_page.set_cropbox(page.cropbox)
-        spare, scale = twin_page.insert_htmlbox(
-            rect, html, css=css, archive=archive, scale_low=scale_low
-        )
-        if spare < 0:
-            return spare, scale
-        twin.subset_fonts()
-        data = twin.tobytes(garbage=3, deflate=True)
+    spare, scale, data = _place(page, rect, html, css, archive, scale_low, text)
+    if data is None:
+        return min(spare, -1.0), scale
     with pymupdf.open("pdf", data) as stamp:
         page.show_pdf_page(page.rect, stamp, 0)
     return spare, scale
 
 
+def _text_lines(page: pymupdf.Page) -> list[pymupdf.Rect]:
+    """Retângulos de cada linha com texto. Blocos do MuPDF podem abranger uma tabela."""
+    boxes = []
+    for block in page.get_text("dict", flags=TEXT_FLAGS)["blocks"]:
+        for line in block.get("lines", ()):
+            if _line_text(line).strip():
+                boxes.append(pymupdf.Rect(line["bbox"]))
+    return boxes
+
+
 def _obstacles(page: pymupdf.Page, rect: pymupdf.Rect, edited: list[pymupdf.Rect]) -> float:
     """Até onde o bloco pode crescer para baixo sem encostar em outro conteúdo."""
     limit = page.rect.y1 - EXPAND_MARGIN
-    candidates = [pymupdf.Rect(block[:4]) for block in page.get_text("blocks", flags=TEXT_FLAGS)]
+    candidates = _text_lines(page)
     candidates += [pymupdf.Rect(item["bbox"]) for item in page.get_image_info()]
     for drawing in page.get_drawings():
         area = pymupdf.Rect(drawing["rect"])
@@ -405,6 +522,43 @@ def _obstacles(page: pymupdf.Page, rect: pymupdf.Rect, edited: list[pymupdf.Rect
         if other.y0 >= rect.y1 - 0.5:
             limit = min(limit, other.y0 - 2.0)
     return limit
+
+
+def _widen(
+    page: pymupdf.Page, rect: pymupdf.Rect, align: str, others: list[pymupdf.Rect]
+) -> pymupdf.Rect:
+    """Alarga o bloco para os lados até a margem do texto ou o próximo objeto da linha.
+
+    Um bloco de uma linha tem a largura exata do texto antigo; sem isso, uma palavra a
+    mais já "não cabe". Cresce para a direita, para a esquerda ou para os dois lados,
+    conforme o alinhamento, sem passar por cima de texto, imagem ou desenho vizinho.
+    """
+    texts = _text_lines(page)
+    left_edge = min((box.x0 for box in texts + [rect]), default=rect.x0)
+    right_edge = max((box.x1 for box in texts + [rect]), default=rect.x1)
+    margin = max(SIDE_MARGIN, left_edge - page.rect.x0)
+    right_limit = max(right_edge, page.rect.x1 - margin)
+    left_limit = page.rect.x0 + max(SIDE_MARGIN, page.rect.x1 - right_limit)
+    obstacles = texts + others + [pymupdf.Rect(item["bbox"]) for item in page.get_image_info()]
+    for drawing in page.get_drawings():
+        area = pymupdf.Rect(drawing["rect"])
+        if area.height < page.rect.height * 0.6:
+            obstacles.append(area)
+    for other in obstacles:
+        if other.y0 >= rect.y1 - 0.5 or other.y1 <= rect.y0 + 0.5:
+            continue
+        if other.x0 >= rect.x1 - 0.5:
+            right_limit = min(right_limit, other.x0 - 3)
+        elif other.x1 <= rect.x0 + 0.5:
+            left_limit = max(left_limit, other.x1 + 3)
+    grow_right = max(0.0, right_limit - rect.x1)
+    grow_left = max(0.0, rect.x0 - left_limit)
+    if align == "right":
+        return pymupdf.Rect(rect.x0 - grow_left, rect.y0, rect.x1, rect.y1)
+    if align == "center":
+        grow = min(grow_left, grow_right)
+        return pymupdf.Rect(rect.x0 - grow, rect.y0, rect.x1 + grow, rect.y1)
+    return pymupdf.Rect(rect.x0, rect.y0, rect.x1 + grow_right, rect.y1)
 
 
 def _check_options(options: dict) -> tuple[float, bool, bool, bool]:
@@ -462,7 +616,13 @@ def _fit_prefix(
     while low <= high:
         middle = (low + high) // 2
         head, _ = _split_runs(runs, cuts[middle])
-        if head and _measure(page, rect, _html(head, styles, fonts), css, archive) >= 0:
+        if (
+            head
+            and _measure(
+                page, rect, _html(head, styles, fonts), css, archive, "".join(r.text for r in head)
+            )
+            >= 0
+        ):
             best, low = cuts[middle], middle + 1
         else:
             high = middle - 1
@@ -617,35 +777,39 @@ def _replace(page: pymupdf.Page, edits: list, options: dict, added: list[int]) -
     written: list[tuple[pymupdf.Rect, str]] = []
     smallest = 1.0
     expanded = 0
+    widened = 0
     for block, runs in targets:
         text = "".join(run.text for run in runs)
         if not text.strip():
             continue
-        fonts = {}
-        faces = []
-        for run in runs:
-            key = (run.style, run.bold, run.italic)
-            if key in fonts:
-                continue
-            choice = resolve_font(
-                block.styles[run.style], run.bold, run.italic, use_system=use_system
-            )
-            fonts[key] = choice
-            report_fonts[choice.label] = report_fonts.get(choice.label, True) and choice.exact
-            if choice.path:
-                name = choice.css + ".font"
-                if name not in archived:
-                    with open(choice.path, "rb") as stream:
-                        archive.add(stream.read(), name)
-                    archived.add(name)
-                faces.append(f"@font-face{{font-family:'{choice.css}';src:url({name});}}")
         align = block.align if block.align in ALIGNMENTS else "left"
-        css = "".join(dict.fromkeys(faces)) + (
-            f"p{{margin:0;}} body{{margin:0;text-align:{align};line-height:{block.line_height};}}"
-        )
-        html = _html(runs, block.styles, fonts)
+
+        fonts, css, html = _font_setup(block, runs, align, use_system, archive, archived)
+        if use_system and not _renders_exactly(page, html, css, archive, text):
+            # Algumas fontes instaladas trocam letras na leitura (ligaduras como "fi" mapeadas
+            # para outro caractere). Nesse bloco, a fonte padrão parecida escreve o texto certo.
+            fonts, css, html = _font_setup(block, runs, align, False, archive, archived)
+        for choice in fonts.values():
+            report_fonts[choice.label] = report_fonts.get(choice.label, True) and choice.exact
         rect = pymupdf.Rect(block.bbox)
-        spare = _measure(page, rect, html, css, archive) if overflow else -1.0
+        spare = _measure(page, rect, html, css, archive, text)
+        if spare < 0:
+            # Primeiro tenta usar o espaço livre ao lado, antes de reduzir ou quebrar.
+            others = [other for other in target_rects if other != rect]
+            wider = _widen(page, rect, align, others)
+            if wider.width > rect.width + 1:
+                rect = wider
+                widened += 1
+                spare = _measure(page, rect, html, css, archive, text)
+        if spare < 0:
+            # O retângulo do bloco tem a altura das letras, menor que a altura de linha do
+            # texto novo; uma folga pequena embaixo evita reduzir a fonte à toa.
+            size = max(style.size for style in block.styles)
+            room = _obstacles(page, rect, target_rects) - rect.y1
+            slack = min(room, size * LINE_SLACK)
+            if slack > 0.5:
+                rect = pymupdf.Rect(rect.x0, rect.y0, rect.x1, rect.y1 + slack)
+                spare = _measure(page, rect, html, css, archive, text)
         if overflow and spare < 0:
             # Preenche o espaço livre abaixo do bloco e continua em páginas novas.
             limit = _obstacles(page, rect, target_rects)
@@ -656,8 +820,15 @@ def _replace(page: pymupdf.Page, edits: list, options: dict, added: list[int]) -
             runs, rest = _split_runs(runs, cut)
             text = "".join(run.text for run in runs)
             top, bottom = _margins(page)
-            # As páginas novas têm a geometria desta; a medida usa uma página gêmea.
-            area = pymupdf.Rect(rect.x0, top, rect.x1, page.rect.y1 - bottom)
+            # As páginas novas têm a geometria desta; a medida usa uma página gêmea. Nelas
+            # o texto ocupa a largura da coluna de texto, não a de uma célula estreita.
+            lines = _text_lines(page) + [rect]
+            area = pymupdf.Rect(
+                min(line.x0 for line in lines),
+                top,
+                max(line.x1 for line in lines),
+                page.rect.y1 - bottom,
+            )
             while rest:
                 if len(pending) >= MAX_CONTINUATION_PAGES:
                     raise OldSchoolPDFError(
@@ -674,19 +845,20 @@ def _replace(page: pymupdf.Page, edits: list, options: dict, added: list[int]) -
             if not runs:
                 continue
             html = _html(runs, block.styles, fonts)
-            spare, scale = _stamp(page, rect, html, css, archive, 1)
+            spare, scale = _stamp(page, rect, html, css, archive, 1, text)
         else:
-            spare, scale = _stamp(page, rect, html, css, archive, scale_low)
-        if spare < 0 and expand and not overflow:
-            limit = _obstacles(page, rect, target_rects)
-            if limit > rect.y1 + 1:
-                rect = pymupdf.Rect(rect.x0, rect.y0, rect.x1, limit)
-                spare, scale = _stamp(page, rect, html, css, archive, scale_low)
-                expanded += spare >= 0
+            if spare < 0 and expand:
+                # Com a expansão pedida, o bloco cresce para baixo antes de reduzir a fonte.
+                limit = _obstacles(page, rect, target_rects)
+                if limit > rect.y1 + 1:
+                    rect = pymupdf.Rect(rect.x0, rect.y0, rect.x1, limit)
+                    expanded += 1
+            spare, scale = _stamp(page, rect, html, css, archive, scale_low, text)
         if spare < 0:
             raise OldSchoolPDFError(
-                "O texto novo não cabe no espaço do bloco, mesmo reduzindo a fonte. "
-                "Encurte o texto ou permita reduzir mais e expandir para baixo."
+                "O texto novo não cabe no espaço do bloco, mesmo usando a largura livre ao lado "
+                "e reduzindo a fonte. Encurte o texto, permita reduzir mais, expandir para "
+                "baixo ou continuar o restante numa página nova."
             )
         smallest = min(smallest, scale)
         written.append((rect, text))
@@ -732,7 +904,7 @@ def _replace(page: pymupdf.Page, edits: list, options: dict, added: list[int]) -
         new.set_mediabox(mediabox)
         new.set_cropbox(cropbox)
         added.append(index)
-        spare, _ = _stamp(new, area, html, css, archive, 1)
+        spare, _ = _stamp(new, area, html, css, archive, 1, text)
         other = doc[index]
         if spare < 0 or compare_form(_written_text(other, area)) != compare_form(text):
             raise OldSchoolPDFError(
@@ -746,6 +918,7 @@ def _replace(page: pymupdf.Page, edits: list, options: dict, added: list[int]) -
         "fonts": [{"label": label, "exact": exact} for label, exact in report_fonts.items()],
         "scale": round(smallest, 3),
         "expanded": expanded,
+        "widened": widened,
         "links_restored": len(detached),
         "pages_added": len(added),
     }

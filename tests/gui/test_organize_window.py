@@ -192,6 +192,40 @@ def test_text_editor_offers_continuation_on_new_page(window, qtbot, tmp_path, mo
     dialog.done(0)
 
 
+def test_preview_navigates_continuation_pages_and_shows_failures(
+    window, qtbot, tmp_path, monkeypatch
+):
+    open_tab(window, qtbot, make_pdf(tmp_path / "Prévia.pdf"))
+    monkeypatch.setattr(window.text_tools, "run_dialog", lambda dialog: dialog.show())
+    window.actions["edit_text"].trigger()
+    dialog = window.text_tools.dialog
+    qtbot.waitUntil(lambda: not dialog.working, timeout=20000)
+    assert "Gerar prévia" in dialog.preview.message
+    assert not dialog.preview_next.isVisible()
+    index = next(i for i, block in enumerate(dialog.blocks) if "Texto do corpo" in block.text)
+    dialog.list.setCurrentRow(index)
+    dialog.editor.setPlainText("Uma frase bem comprida para ocupar a página. " * 60)
+    assert "desatualizada" in dialog.preview.message
+    dialog.overflow.setChecked(True)
+    dialog.preview_button.click()
+    qtbot.waitUntil(lambda: not dialog.working and dialog.preview_pages > 0, timeout=30000)
+    assert dialog.pages.currentIndex() == 1 and dialog.preview_next.isEnabled()
+    assert not dialog.preview_previous.isEnabled() and "1 de" in dialog.preview_label.text()
+    dialog.preview_next.click()
+    qtbot.waitUntil(lambda: not dialog.working and dialog.preview_view == 1, timeout=30000)
+    assert "continuação" in dialog.preview_label.text() and dialog.preview_previous.isEnabled()
+    # Sem a continuação, o texto não cabe: o motivo aparece na própria área da prévia.
+    dialog.overflow.setChecked(False)
+    dialog.shrink.setCurrentIndex(dialog.shrink.findData("none"))
+    dialog.preview_button.click()
+    qtbot.waitUntil(
+        lambda: not dialog.working and "não cabe" in dialog.preview.message, timeout=30000
+    )
+    assert dialog.pages.currentIndex() == 1 and not dialog.preview_next.isVisible()
+    dialog.edits.clear()
+    dialog.done(0)
+
+
 def test_batch_dialog_offers_word_with_page_ranges(qtbot, tmp_path):
     source = make_pdf(tmp_path / "Para Word.pdf")
     dialog = BatchDialog(MediaOperation.DOCX, "", (), source, None, None)

@@ -366,3 +366,25 @@ def test_engine_applies_new_edits_with_undo_and_permissions(tmp_path):
         with pytest.raises(OldSchoolPDFError, match="permissões"):
             engine.edit(action, 0, values, str(scratch), False)
     engine.close()
+
+
+def test_preview_shows_continuation_pages(tmp_path):
+    source = tmp_path / "continua.pdf"
+    with pymupdf.open() as doc:
+        page = doc.new_page(width=420, height=600)
+        page.insert_text((40, 100), "Parágrafo curto que será trocado.", fontsize=12)
+        doc.save(source)
+    engine = PdfEngine()
+    engine.open(str(source))
+    block = engine.text_blocks(0, 300, 400, 1.0)[0]["blocks"][0]
+    edit = [{"key": block["key"], "runs": [dict(block["runs"][0], text="palavra " * 450)]}]
+    options = {"overflow": "new_page"}
+    first, first_pixels = engine.preview_text(0, edit, options, 300, 400, 1.0)
+    assert first["report"]["pages_added"] >= 1 and first["report"]["view"] == 0
+    second, second_pixels = engine.preview_text(0, edit, options, 300, 400, 1.0, view=1)
+    assert second["report"]["view"] == 1 and second["frame"]["page"] == 1
+    assert second_pixels != first_pixels
+    clamped, _ = engine.preview_text(0, edit, options, 300, 400, 1.0, view=99)
+    assert clamped["report"]["view"] == first["report"]["pages_added"]
+    assert engine.document.page_count == 1
+    engine.close()

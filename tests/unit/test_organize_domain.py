@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from oldschoolpdf.domain.editing import (
@@ -43,3 +45,13 @@ def test_field_names():
     for bad in ("", "a.b", "nome/aluno", "x" * 121, 7):
         with pytest.raises(OldSchoolPDFError):
             field_name(bad)
+
+
+@pytest.mark.skipif(not Path(r"C:\Windows\Fonts\cambria.ttc").exists(), reason="Sem Cambria")
+def test_font_collections_are_indexed_by_their_first_face():
+    from oldschoolpdf.infrastructure.system_fonts import describe_font
+
+    assert describe_font(Path(r"C:\Windows\Fonts\cambria.ttc")) == (
+        ("cambria", False, False),
+        "Cambria",
+    )

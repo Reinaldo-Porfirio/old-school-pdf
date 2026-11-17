@@ -85,10 +85,13 @@ texto numerados; clique num bloco ou escolha na lista. Edite o texto à direita.
 prévia** para ver a cópia editada na aba ao lado. **Aplicar ao PDF** grava uma revisão nova,
 desfeita com Ctrl+Z, e **Restaurar bloco** desfaz as mudanças de um bloco antes de aplicar.
 
-Se o texto novo não couber, escolha reduzir a fonte até 85% ou 70% ou expandir o bloco para
-baixo, até o próximo conteúdo. Com **Continuar o restante numa página nova**, o bloco ocupa o
+Se o texto novo não couber, o bloco usa primeiro a largura livre ao lado, até a margem do
+texto ou o próximo objeto da linha. Depois, escolha reduzir a fonte até 85% ou 70% ou expandir
+o bloco para baixo, até o próximo conteúdo. Com **Continuar o restante numa página nova**, o bloco ocupa o
 espaço livre abaixo dele sem reduzir a fonte e o texto que sobrar segue em páginas novas,
-inseridas logo depois da atual (até 20 páginas por edição). A opção **Usar as fontes instaladas no Windows** deixa o
+inseridas logo depois da atual (até 20 páginas por edição). Na aba de prévia, use
+**Página anterior** e **Próxima página** para conferir as páginas de continuação. Células de
+tabela e itens de lista aparecem como blocos separados. A opção **Usar as fontes instaladas no Windows** deixa o
 resultado mais fiel ao original. Blocos tracejados não podem ser editados; passe o mouse sobre
 eles na lista para ver o motivo. Páginas digitalizadas não têm texto editável.
 

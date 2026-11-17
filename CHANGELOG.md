@@ -1,5 +1,29 @@
 # Alterações
 
+## 0.9.1 · 17/11/2026
+
+Correções na edição do texto original, achadas com PDFs reais gerados pelo Word e pelo Edge.
+
+- **Largura do bloco:** um bloco de uma linha tinha a largura e a altura exatas do texto
+  antigo, então qualquer palavra a mais "não cabia". Agora o bloco usa primeiro a largura livre
+  ao lado (até a margem do texto ou o próximo objeto da linha) e uma folga de altura, antes de
+  reduzir a fonte. Títulos centralizados continuam centralizados; alinhados à direita crescem
+  para a esquerda.
+- **Tabelas e listas:** o MuPDF juntava a tabela inteira, ou uma linha dela, num bloco só, e
+  editar desmanchava as colunas. Agora cada célula é um bloco separado.
+- **Continuação em página nova:** as páginas novas usam a largura da coluna de texto, em vez da
+  largura de uma célula estreita, e títulos não são mais picotados em várias páginas.
+- **Prévia:** a aba de prévia fica sempre disponível. Mostra as páginas de continuação com
+  botões de navegação, explica na própria área quando a prévia falha e avisa quando ficou
+  desatualizada depois de mudar o texto ou as opções.
+- O MuPDF às vezes dizia que o texto cabia e descartava as últimas linhas; agora o texto escrito
+  é conferido antes de gravar e, se faltar algo, o programa tenta reduzir ou responde que não
+  coube, com uma mensagem que aponta as opções.
+- Fontes em coleções `.ttc` (como a Cambria, usada pelo Word) passam a ser encontradas.
+  Quando uma fonte instalada troca letras na leitura (ligaduras como "fi"), o bloco usa a fonte
+  padrão parecida, para o texto continuar pesquisável e copiável.
+- Com "Expandir o bloco para baixo" marcado, o bloco cresce antes de reduzir a fonte.
+
 ## 0.9.0 · 17/11/2026
 
 - **Converter para Word (.docx)**, com conversor próprio e offline: parágrafos com fonte,

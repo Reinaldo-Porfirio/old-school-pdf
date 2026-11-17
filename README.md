@@ -19,8 +19,8 @@ completos. Nada de minimalismo.
 
 | Arquivo | Para quem |
 |---|---|
-| [**OldSchoolPDF-0.9.0-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.9.0/OldSchoolPDF-0.9.0-setup.exe) (≈ 45 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
-| [**OldSchoolPDF-0.9.0-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.9.0/OldSchoolPDF-0.9.0-sem-instalar.zip) (≈ 59 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
+| [**OldSchoolPDF-0.9.1-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.9.1/OldSchoolPDF-0.9.1-setup.exe) (≈ 45 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
+| [**OldSchoolPDF-0.9.1-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.9.1/OldSchoolPDF-0.9.1-sem-instalar.zip) (≈ 59 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
 
 **Requisitos:** Windows 10 ou 11 de 64 bits e cerca de 140 MB livres em disco. Não precisa
 de Python, de conta nem de internet. Foi testado no Windows 11. O Windows 10 é aceito,
@@ -30,7 +30,7 @@ mas ainda não foi testado.
 > código, então o SmartScreen avisa na primeira vez. Clique em **Mais informações >
 > Executar assim mesmo**. Para conferir se o arquivo é o original, compare o
 > SHA-256 com o publicado na [página da versão](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/latest)
-> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.9.0-setup.exe`).
+> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.9.1-setup.exe`).
 
 ## O que ele faz
 
@@ -167,9 +167,12 @@ Como a edição é feita com segurança:
 4. Confere o texto gravado, os pixels fora da área editada, a cor visível, os links e as
    anotações. Se algo divergir, a edição é cancelada e nada muda.
 
-Se o texto novo for maior, escolha reduzir a fonte (até 85% ou 70%), expandir o bloco para
-baixo até o próximo conteúdo ou **continuar o restante numa página nova**, inserida logo depois
-da atual, sem reduzir a fonte. Não podem ser editados: páginas digitalizadas (o texto é
+Se o texto novo for maior, o bloco primeiro usa a largura livre ao lado, até a margem do
+texto ou o próximo objeto da linha. Depois, escolha reduzir a fonte (até 85% ou 70%), expandir
+o bloco para baixo até o próximo conteúdo ou **continuar o restante numa página nova**, inserida logo depois
+da atual, sem reduzir a fonte. A prévia mostra a página editada e as páginas de
+continuação. Células de tabela e itens de lista são editados um a um, sem desmanchar as
+colunas. Não podem ser editados: páginas digitalizadas (o texto é
 imagem), a camada invisível do OCR, texto girado ou vertical, texto sobre campos de formulário
 e escrita da direita para a esquerda. Tabelas e colunas funcionam bloco a bloco. Editar um PDF
 assinado digitalmente invalida a assinatura; o programa avisa antes.

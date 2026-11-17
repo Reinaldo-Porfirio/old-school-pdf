@@ -95,7 +95,7 @@ def test_edit_preview_apply_and_undo(window, qtbot, tmp_path):
     assert dialog.apply_button.isEnabled()
 
     dialog.preview_button.click()
-    qtbot.waitUntil(lambda: dialog.pages.isTabEnabled(1), timeout=20000)
+    qtbot.waitUntil(lambda: dialog.preview.pixmap is not None and not dialog.working, timeout=20000)
     assert dialog.pages.currentIndex() == 1 and "verificada" in dialog.status.text()
     assert dialog.preview.pixmap is not None
 

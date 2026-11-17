@@ -186,14 +186,29 @@ class PdfEngine:
         return {"blocks": read_blocks(pdf_page), "frame": frame}, raster
 
     def preview_text(
-        self, page: int, blocks: list, options: dict, width: int, height: int, dpr: float
+        self,
+        page: int,
+        blocks: list,
+        options: dict,
+        width: int,
+        height: int,
+        dpr: float,
+        view: int = 0,
     ) -> tuple[dict, bytes]:
-        """Aplica a edição numa cópia descartável e devolve a imagem do resultado."""
+        """Aplica a edição numa cópia descartável e devolve a imagem do resultado.
+
+        `view` 0 mostra a página editada; 1, 2… mostram as páginas de continuação.
+        """
         self._page(page)
         self._require_text_edit()
+        if not isinstance(view, int) or view < 0:
+            raise OldSchoolPDFError("Página da prévia inválida.")
         with self.history.read(self.history.current, self._password) as working:
             report = replace_blocks(working, page, blocks, options)
-            frame, raster = _raster(working[page], page, 0, "page", width, height, dpr)
+            view = min(view, report.get("pages_added", 0))
+            shown = page + view
+            frame, raster = _raster(working[shown], shown, 0, "page", width, height, dpr)
+        report["view"] = view
         return {"report": report, "frame": frame}, raster
 
     def _require_text_edit(self) -> None:

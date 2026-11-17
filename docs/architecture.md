@@ -218,3 +218,14 @@ layout por IA desligado), blocos de texto divididos em parágrafos pelas regras 
 `domain/text_editing.py`, imagens extraídas no formato original (ou renderizadas quando giradas)
 e links. A camada invisível do OCR vira texto e a imagem digitalizada sob ela é omitida. O
 arquivo é gravado, reaberto e conferido antes de ser publicado.
+
+### Ajustes da 0.9.1 na edição de texto
+
+`_scan` separa linhas lado a lado (`_line_groups`) em blocos próprios, porque o MuPDF junta
+células de tabela num bloco só, e reconhece títulos de uma linha centralizados ou à direita.
+Antes de reduzir a fonte, `_replace` alarga o bloco (`_widen`), considerando as linhas de texto,
+imagens e desenhos vizinhos, e dá uma folga de altura para a linha nova. `_place` escreve numa
+página gêmea e confere o texto lido de volta, porque o MuPDF pode descartar linhas finais
+dizendo que coube. `_renders_exactly` troca para a fonte padrão quando a fonte instalada não
+devolve as mesmas letras. A prévia aceita `view` para mostrar as páginas de continuação.
+

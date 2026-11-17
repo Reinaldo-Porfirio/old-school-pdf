@@ -142,6 +142,8 @@ def describe_report(report: dict) -> str:
     scale = report.get("scale", 1)
     if scale < 0.999:
         parts.append(f"Texto reduzido para {scale:.0%} para caber no espaço.")
+    if report.get("widened"):
+        parts.append(f"{report['widened']} bloco(s) alargado(s) para usar o espaço livre ao lado.")
     if report.get("expanded"):
         parts.append(f"{report['expanded']} bloco(s) expandido(s) para baixo.")
     if report.get("links_restored"):
@@ -162,13 +164,20 @@ class PagePreview(QWidget):
     def __init__(self, *, clickable: bool) -> None:
         super().__init__()
         self.pixmap: QPixmap | None = None
+        self.message = ""
         self.regions: list[tuple[float, float, float, float]] = []
         self.states: list[str] = []
         self.selected = -1
         self.clickable = clickable
         self.setMinimumSize(320, 420)
 
+    def set_message(self, text: str) -> None:
+        """Mostra um aviso no lugar da página (prévia desatualizada ou que falhou)."""
+        self.message = text
+        self.update()
+
     def set_page(self, pixmap: QPixmap | None, regions=(), states=()) -> None:
+        self.message = ""
         self.pixmap = pixmap
         self.regions = list(regions)
         self.states = list(states)
@@ -201,9 +210,13 @@ class PagePreview(QWidget):
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor("#808080"))
         target = self._target()
-        if target.isNull():
+        if target.isNull() or self.message:
             painter.setPen(QColor("#ffffff"))
-            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Carregando a página…")
+            painter.drawText(
+                self.rect().adjusted(24, 24, -24, -24),
+                Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
+                self.message or "Carregando a página…",
+            )
             return
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         painter.drawPixmap(target, self.pixmap, QRectF(self.pixmap.rect()))
@@ -286,8 +299,26 @@ class TextEditDialog(QDialog):
         self.original.block_clicked.connect(self._select_block)
         self.preview = PagePreview(clickable=False)
         self.pages.addTab(self.original, "Original")
-        self.pages.addTab(self.preview, "Prévia da cópia editada")
-        self.pages.setTabEnabled(1, False)
+        preview_tab = QWidget()
+        preview_layout = QVBoxLayout(preview_tab)
+        preview_layout.setContentsMargins(0, 0, 0, 0)
+        preview_layout.addWidget(self.preview, 1)
+        navigation = QHBoxLayout()
+        self.preview_previous = QPushButton("◀ Página anterior")
+        self.preview_previous.clicked.connect(lambda: self._show_preview_page(-1))
+        self.preview_label = QLabel()
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_next = QPushButton("Próxima página ▶")
+        self.preview_next.clicked.connect(lambda: self._show_preview_page(1))
+        navigation.addWidget(self.preview_previous)
+        navigation.addWidget(self.preview_label, 1)
+        navigation.addWidget(self.preview_next)
+        preview_layout.addLayout(navigation)
+        self.pages.addTab(preview_tab, "Prévia da cópia editada")
+        self.preview_view = 0
+        self.preview_pages = 0
+        self.preview.set_message("Clique em Gerar prévia para ver a cópia editada aqui.")
+        self._refresh_navigation()
         splitter.addWidget(self.pages)
 
         side = QWidget()
@@ -363,6 +394,10 @@ class TextEditDialog(QDialog):
         self.system_fonts = QCheckBox("Usar as fontes instaladas no Windows (mais fiéis)")
         self.system_fonts.setChecked(True)
         form.addRow(self.system_fonts)
+        # Mudar uma opção deixa a prévia anterior desatualizada.
+        self.shrink.currentIndexChanged.connect(self._stale_preview)
+        for option in (self.expand, self.overflow, self.system_fonts):
+            option.toggled.connect(self._stale_preview)
         column.addWidget(options)
 
         self.status = QLabel()
@@ -376,7 +411,7 @@ class TextEditDialog(QDialog):
         self.counter = QLabel()
         buttons.addWidget(self.counter, 1)
         self.preview_button = QPushButton("Gerar prévia")
-        self.preview_button.clicked.connect(self._request_preview)
+        self.preview_button.clicked.connect(lambda: self._request_preview())
         self.apply_button = QPushButton("Aplicar ao PDF")
         self.apply_button.setDefault(True)
         self.apply_button.clicked.connect(self._apply)
@@ -423,6 +458,7 @@ class TextEditDialog(QDialog):
             self.status.setStyleSheet("")
             self.status.setText(text)
         self._update_counter()
+        self._refresh_navigation()
 
     def _show_error(self, text: str) -> None:
         self.status.setStyleSheet("color: #a00000;")
@@ -468,9 +504,41 @@ class TextEditDialog(QDialog):
     def _previewed(self, report: dict, frame: PageFrame) -> None:
         self._busy("")
         self.preview.set_page(frame_pixmap(frame))
-        self.pages.setTabEnabled(1, True)
+        self.preview_pages = report.get("pages_added", 0)
+        self.preview_view = report.get("view", 0)
+        self._refresh_navigation()
         self.pages.setCurrentIndex(1)
         self._show_info("Prévia gerada e verificada. " + describe_report(report))
+
+    def _refresh_navigation(self) -> None:
+        total = self.preview_pages + 1
+        visible = self.preview_pages > 0
+        for widget in (self.preview_previous, self.preview_next, self.preview_label):
+            widget.setVisible(visible)
+        if self.preview_view == 0:
+            label = f"Página {self.page + 1}, a editada (1 de {total})"
+        else:
+            label = (
+                f"Página nova {self.page + 1 + self.preview_view}, continuação "
+                f"({self.preview_view + 1} de {total})"
+            )
+        self.preview_label.setText(label)
+        idle = not self.working
+        self.preview_previous.setEnabled(idle and self.preview_view > 0)
+        self.preview_next.setEnabled(idle and self.preview_view < self.preview_pages)
+
+    def _show_preview_page(self, delta: int) -> None:
+        target = self.preview_view + delta
+        if 0 <= target <= self.preview_pages:
+            self._request_preview(view=target)
+
+    def _stale_preview(self, *_args) -> None:
+        self.preview_pages = self.preview_view = 0
+        self._refresh_navigation()
+        self.preview.set_message(
+            "A prévia ficou desatualizada porque o texto ou as opções mudaram. "
+            "Clique em Gerar prévia de novo."
+        )
 
     def _applied(self, report: dict) -> None:
         self.report = report
@@ -480,6 +548,13 @@ class TextEditDialog(QDialog):
     def _failed(self, error: str) -> None:
         self._busy("")
         self._show_error(error)
+        if not self.isVisible():
+            return
+        # O motivo aparece também na área da prévia, onde a pessoa está olhando.
+        self.preview_pages = self.preview_view = 0
+        self._refresh_navigation()
+        self.preview.set_message("Não foi possível gerar a prévia.\n\n" + error)
+        self.pages.setCurrentIndex(1)
 
     # Edição
     def _select_block(self, index: int) -> None:
@@ -526,7 +601,7 @@ class TextEditDialog(QDialog):
             return
         self._store_current()
         self._refresh_states()
-        self.pages.setTabEnabled(1, False)
+        self._stale_preview()
         if len(self.editor.toPlainText()) > MAX_BLOCK_CHARS:
             self._show_error(f"Cada bloco aceita até {MAX_BLOCK_CHARS} caracteres.")
 
@@ -615,7 +690,7 @@ class TextEditDialog(QDialog):
             payload.append({"key": block.key, "runs": [asdict(run) for run in runs]})
         return payload
 
-    def _request_preview(self) -> None:
+    def _request_preview(self, *, view: int = 0) -> None:
         payload = self._payload()
         if payload is None:
             return
@@ -623,7 +698,7 @@ class TextEditDialog(QDialog):
         options = self.options()
         self._request(
             lambda size, dpr: self.viewer.preview_text(
-                self.page, payload, options, size[0], size[1], dpr
+                self.page, payload, options, size[0], size[1], dpr, view
             )
         )
 

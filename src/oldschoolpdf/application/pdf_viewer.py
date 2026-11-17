@@ -415,7 +415,14 @@ class PdfViewer(QObject):
         return self._queue_command("text_blocks", arguments, "Lendo o texto da página…")
 
     def preview_text(
-        self, page: int, blocks: list[dict], options: dict, width: int, height: int, dpr: float
+        self,
+        page: int,
+        blocks: list[dict],
+        options: dict,
+        width: int,
+        height: int,
+        dpr: float,
+        view: int = 0,
     ) -> bool:
         arguments = {
             "page": page,
@@ -424,6 +431,7 @@ class PdfViewer(QObject):
             "width": width,
             "height": height,
             "dpr": dpr,
+            "view": view,
         }
         return self._queue_command("preview_text", arguments, "Gerando a prévia da edição…")
 

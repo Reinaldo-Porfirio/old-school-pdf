@@ -112,20 +112,27 @@ def test_rotated_and_cropped_pages_write_in_place(rotation, crop):
         assert "Fixo" in page_text(page)
 
 
-def test_overflow_is_refused_then_shrinks_or_expands(document):
+def test_overflow_is_refused_then_widens_or_expands(document):
     page = document[0]
     target = find(read_blocks(page), "Título")
-    longer = "Título do relatório anual da equipe"
+    huge = "Título do relatório anual da equipe de vendas, marketing e operações regionais"
     # A recusa acontece numa cópia, como faz o motor; o documento original não muda.
     with (
         pymupdf.open("pdf", document.tobytes()) as copy,
         pytest.raises(OldSchoolPDFError, match="não cabe"),
     ):
-        replace_blocks(copy, 0, [edit_of(target, longer)], {"shrink": "none"})
+        replace_blocks(copy, 0, [edit_of(target, huge)], {"shrink": "none"})
     assert "Título do relatório" in page_text(page)
-    report = replace_blocks(document, 0, [edit_of(target, longer)], {"expand": True})
-    assert report["expanded"] == 1
+    # Uma linha um pouco maior usa a largura livre ao lado, sem reduzir a fonte.
+    longer = "Título do relatório anual da equipe"
+    report = replace_blocks(document, 0, [edit_of(target, longer)], {"shrink": "none"})
+    assert report["widened"] == 1 and report["expanded"] == 0 and report["scale"] == 1.0
     assert longer in page_text(page)
+    paragraph = find(read_blocks(page), "Primeira")
+    text = paragraph["text"] + " " + "Mais uma frase acrescentada ao parágrafo. " * 4
+    report = replace_blocks(document, 0, [edit_of(paragraph, text)], {"expand": True})
+    assert report["expanded"] == 1 and report["scale"] == 1.0
+    assert "Bloco vizinho que não pode mudar" in page_text(page)
 
 
 def test_expansion_stops_at_the_next_block(document):
@@ -224,8 +231,10 @@ def test_subset_font_is_replaced_by_installed_family_keeping_bold():
         page = doc.new_page(width=420, height=600)
         page.insert_font(fontname="TR", fontfile=str(TIMES))
         page.insert_font(fontname="TB", fontfile=str(TIMES.with_name("timesbd.ttf")))
-        page.insert_text((40, 80), "Valor normal", fontname="TR", fontsize=12)
-        page.insert_text((140, 80), "Destaque", fontname="TB", fontsize=12)
+        page.insert_text((40, 80), "Valor normal ", fontname="TR", fontsize=12)
+        # "Destaque" continua a frase logo depois do espaço, como num texto de verdade.
+        after = 40 + pymupdf.Font(fontfile=str(TIMES)).text_length("Valor normal ", 12)
+        page.insert_text((after, 80), "Destaque", fontname="TB", fontsize=12)
         doc.subset_fonts()
         doc = pymupdf.open("pdf", doc.tobytes())
         page = doc[0]
@@ -377,3 +386,57 @@ def test_invisible_white_on_white_text_is_refused():
         target = find(read_blocks(page), "escondido")
         with pytest.raises(OldSchoolPDFError, match="invisível"):
             replace_blocks(doc, 0, [edit_of(target, "Outro")], {})
+
+
+def test_table_cells_on_one_line_become_separate_blocks():
+    with pymupdf.open() as doc:
+        page = doc.new_page(width=500, height=400)
+        for x, text in ((40, "Produto"), (200, "Preço"), (330, "Qtd")):
+            page.insert_text((x, 80), text, fontsize=11)
+        for x, text in ((40, "Café"), (200, "R$ 10,00"), (330, "3")):
+            page.insert_text((x, 96), text, fontsize=11)
+        blocks = read_blocks(page)
+        assert {"Produto", "Preço", "Qtd", "Café", "R$ 10,00", "3"} <= {b["text"] for b in blocks}
+        cell = find(blocks, "R$ 10,00")
+        replace_blocks(doc, 0, [edit_of(cell, "R$ 12,50")], {})
+        words = page.get_text("words")
+        price = next(w for w in words if w[4] == "12,50")
+        # A célula foi trocada no lugar; as vizinhas continuam onde estavam.
+        assert price[0] < 330 and next(w for w in words if w[4] == "Qtd")[0] == pytest.approx(
+            330, abs=1
+        )
+
+
+def test_tight_single_line_heading_grows_sideways_without_losing_words():
+    # Título de uma linha com o parágrafo logo abaixo, como nos PDFs do Word: o MuPDF dizia
+    # que o texto cabia e descartava a segunda linha em silêncio.
+    with pymupdf.open() as doc:
+        page = doc.new_page(width=612, height=792)
+        page.insert_text((90, 192), "Cláusula Primeira - Do Objeto", fontsize=14, fontname="hebo")
+        page.insert_text(
+            (90, 214), "O objeto deste contrato é a prestação de serviços.", fontsize=11
+        )
+        heading = find(read_blocks(page), "Cláusula")
+        assert heading["text"] == "Cláusula Primeira - Do Objeto"
+        longer = "Cláusula Primeira - Do Objeto do Contrato"
+        report = replace_blocks(doc, 0, [edit_of(heading, longer)], {"shrink": "none"})
+        assert report["widened"] == 1 and report["scale"] == 1.0
+        assert longer in page_text(page)
+        assert "O objeto deste contrato" in page_text(page)
+
+
+def test_centered_single_line_title_stays_centered():
+    with pymupdf.open() as doc:
+        page = doc.new_page(width=600, height=400)
+        page.insert_text(
+            (40, 160), "Texto comum alinhado à esquerda da página inteira.", fontsize=11
+        )
+        width = pymupdf.get_text_length("Relatório", fontsize=18)
+        page.insert_text(((600 - width) / 2, 80), "Relatório", fontsize=18)
+        title = find(read_blocks(page), "Relatório")
+        assert title["align"] == "center"
+        replace_blocks(
+            doc, 0, [edit_of(title, "Relatório anual de atividades")], {"shrink": "none"}
+        )
+        box = page.search_for("Relatório anual de atividades")[0]
+        assert abs((box.x0 + box.x1) / 2 - 300) < 6

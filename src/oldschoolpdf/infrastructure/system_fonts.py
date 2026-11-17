@@ -53,6 +53,14 @@ def font_folders() -> list[Path]:
 
 def _tables(stream) -> dict[bytes, tuple[int, int]]:
     header = stream.read(12)
+    if header[:4] == b"ttcf":
+        # Coleção (.ttc): vale a primeira fonte, a mesma que o MuPDF carrega do arquivo.
+        # Os deslocamentos das tabelas de cada fonte já contam do início do arquivo.
+        first = stream.read(4)
+        if len(header) < 12 or len(first) < 4 or not struct.unpack(">I", header[8:12])[0]:
+            return {}
+        stream.seek(struct.unpack(">I", first)[0])
+        header = stream.read(12)
     if len(header) < 12 or header[:4] not in (b"\x00\x01\x00\x00", b"OTTO", b"true"):
         return {}
     count = struct.unpack(">H", header[4:6])[0]
@@ -141,7 +149,7 @@ def system_fonts() -> dict[tuple[str, bool, bool], tuple[str, str]]:
         except OSError:
             continue
         for path in entries:
-            if path.suffix.lower() not in (".ttf", ".otf"):
+            if path.suffix.lower() not in (".ttf", ".otf", ".ttc"):
                 continue
             files += 1
             if files > MAX_FONT_FILES:
