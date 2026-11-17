@@ -76,6 +76,26 @@ limpeza das marcas ao mudar de revisão e disponibilidade sem `signing`.
 Verificação manual recomendada antes de publicar: PDFs reais gerados por Word, navegadores e
 digitalizadores, editando um bloco de cada tipo e conferindo a prévia.
 
+## Páginas, marcadores, formulários e Word (0.9)
+
+| Caso | Verificação |
+|---|---|
+| Páginas em branco: tamanho da atual, papel padrão, posição e limites | `tests/integration/test_organize_engine.py` |
+| Corte fixo em páginas giradas 0°, 90°, 180°, 270° | O que aparece desloca exatamente as margens pedidas |
+| Corte automático, página em branco, restaurar e corte grande demais | Relatório e recusas explicadas |
+| Redimensionar com rotação, corte prévio e MediaBox deslocada (16 combinações) | Texto, destaque, link e campo na posição proporcional; texto continua editável |
+| Área escondida pelo corte não reaparece no papel novo | Recorte do conteúdo antigo |
+| Marcadores: renomear, filho novo, link externo preservado, assinatura desatualizada, níveis inválidos | Gravação conferida |
+| Sugestão de marcadores pelos títulos, sem cabeçalho repetido; PDF sem texto | Níveis por tamanho de fonte |
+| Campos de texto, várias linhas, caixa e lista, em página normal e girada | Valores, obrigatoriedade e `/MK /R` |
+| Continuação do texto em páginas novas, em página normal e girada | Todas as palavras na ordem, vizinho intacto |
+| PDF restrito recusa todas as ações novas | Erro de permissão explicado, nada muda |
+| Word: títulos, negrito, itálico, parágrafos reunidos, tabela, link, imagem, OCR, digitalização, paisagem | `tests/integration/test_docx.py` |
+| Interface: menus, diálogos, índice clicável, editor de marcadores, campo desenhado, opção de continuação, lote para Word | `tests/gui/test_organize_window.py` |
+
+Verificação manual recomendada: converter para Word PDFs reais gerados pelo Word, LibreOffice,
+navegadores e digitalizadores com OCR, e abrir o resultado no Word e no LibreOffice.
+
 ## Regressão do M0
 
 - Inicialização: QApplication real, QMainWindow, nove menus, três barras, três

@@ -42,12 +42,29 @@ Em Dividir PDF, informe um intervalo por saída, como 1-3,4-8. Em Extrair págin
 os intervalos indicados entram em um único PDF na ordem informada. Arraste miniaturas
 ou use Reordenar páginas. Girar páginas do PDF aplica a rotação ao documento e atualiza a prévia.
 O menu Documento também permite excluir intervalos da cópia de trabalho.</p>
+<p><b>Documento → Inserir páginas em branco</b> coloca páginas antes ou depois da atual, no mesmo
+tamanho dela ou em A4, A5, Carta ou Ofício. <b>Cortar margens</b> remove as bordas em branco
+automaticamente ou corta medidas fixas de cada lado; a área cortada some da tela e da impressão,
+mas continua no arquivo, então use a redação para apagar informação de verdade.
+<b>Mudar o tamanho do papel</b> leva as páginas para A4, A5, Carta ou Ofício, centralizando e
+ajustando o conteúdo sem distorcer. Texto, links, anotações e campos acompanham.</p>
+<h2>Marcadores (sumário)</h2>
+<p>A aba <b>Índice</b>, no painel Páginas e índice, mostra os marcadores do PDF; clique em um
+para ir à página. Em <b>Documento → Marcadores</b>, adicione marcadores da página atual, renomeie,
+mude a página de destino, reorganize com Subir e Descer e monte os níveis com Recuar e Avançar.
+<b>Sugerir pelos títulos do texto</b> procura linhas com fonte maior que o texto comum e monta
+um sumário pronto para revisar. Marcadores que abrem links externos mantêm o destino.</p>
 <h2>Anotar e preencher</h2>
 <p>Abra o painel <b>Propriedades e ferramentas → Edição</b> ou o menu Editar → Anotações.
 Selecione o destaque, sublinhado, caixa de texto, carimbo, forma ou imagem e arraste sobre
 a página. Clique para posicionar um comentário. Esc cancela a ferramenta ativa.
 Selecione uma anotação na página ou no painel para mover, editar seu texto ou excluí-la,
 conforme o tipo. Para campos AcroForm compatíveis, use Preencher formulário na página do campo.</p>
+<p>Para criar um formulário, use <b>Documento → Criar campo de formulário</b> e arraste o
+retângulo na página. Escolha texto de uma linha, texto de várias linhas, caixa de marcar ou lista
+suspensa, dê um nome único e, se quiser, uma dica, um valor inicial, um limite de caracteres e o
+preenchimento obrigatório. Os campos funcionam em qualquer leitor de PDF. Excluir campo de
+formulário remove um campo da página atual.</p>
 <h2>Editar o texto original</h2>
 <p>Use <b>Editar → Editar texto do PDF</b> (Ctrl+E). A página aparece à esquerda com os
 blocos de texto numerados. Clique num bloco, edite o texto à direita e use Negrito e Itálico
@@ -57,7 +74,9 @@ ser desfeita com Ctrl+Z.</p>
 <p>O programa apaga só o texto do bloco e escreve o novo no mesmo lugar, usando a mesma família
 de fonte instalada no Windows quando existir. Depois confere o texto gravado, o resto da página,
 os links e as anotações; se algo divergir, nada é alterado. Se o texto novo não couber, escolha
-reduzir a fonte ou expandir o bloco para baixo. Blocos tracejados não podem ser editados:
+reduzir a fonte ou expandir o bloco para baixo. Com <b>Continuar o restante numa página nova</b>,
+o bloco ocupa o espaço livre abaixo dele, sem reduzir a fonte, e o texto que sobrar segue em
+páginas novas logo depois da atual. Blocos tracejados não podem ser editados:
 texto invisível de OCR, texto girado, texto sobre campos de formulário ou páginas
 digitalizadas sem texto.</p>
 <h2>Imprimir</h2>
@@ -78,6 +97,14 @@ por.traineddata ou eng.traineddata. Clique em Testar modelos e confirme os idiom
 Em Reconhecer texto, escolha idioma, resolução, páginas e pasta de saída. O resultado mantém a
 aparência da página e acrescenta texto pesquisável onde foi reconhecido. Revise os resultados,
 principalmente em digitalizações de baixa qualidade.</p>
+<h2>Converter para Word</h2>
+<p><b>Ferramentas → Converter para Word (.docx)</b> cria um documento editável no Word ou no
+LibreOffice, sem internet. O texto vira parágrafos com a fonte, o tamanho, o negrito, o itálico e
+a cor do PDF; títulos ganham os estilos de título do Word, tabelas com grade viram tabelas,
+imagens e links são mantidos e cada página do PDF começa numa página nova. A diagramação segue o
+fluxo do texto, então colunas e caixas posicionadas podem mudar de lugar. Páginas com OCR viram
+texto; digitalizações sem OCR entram como imagem. A conversão usa o arquivo gravado no disco:
+salve as alterações da aba antes de converter.</p>
 <h2>Converter, otimizar e processar lotes</h2>
 <p>Em <b>Ferramentas</b>, exporte páginas para PNG ou JPEG, reúna imagens em um PDF,
 extraia texto UTF-8 ou imagens incorporadas. Otimizar PDF compara o tamanho original com
@@ -199,8 +226,9 @@ class HomePage(QScrollArea):
             ("M4", "OCR, conversão e lotes", "Concluído"),
             ("M5", "Segurança e assinaturas locais", "Concluído"),
             ("M6", "Visual Clássico 2000, novo nome e instalador", "Concluído"),
-            ("M7", "Impressão e edição do texto original", "Versão atual"),
-            ("M8", "Mais temas e edição de texto em colunas", "Futuro"),
+            ("M7", "Impressão e edição do texto original", "Concluído"),
+            ("M8", "Páginas, marcadores, formulários e Word", "Versão atual"),
+            ("M9", "Mais temas e edição de texto em colunas", "Futuro"),
         ):
             QTreeWidgetItem(roadmap, row)
         roadmap.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)

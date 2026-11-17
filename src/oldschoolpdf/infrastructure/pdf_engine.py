@@ -9,7 +9,14 @@ from unicodedata import normalize
 
 import pymupdf
 
-from oldschoolpdf.domain.editing import ANNOTATION_EDITS, PAGE_EDITS, TEXT_EDITS
+from oldschoolpdf.domain.editing import (
+    ANNOTATION_EDITS,
+    BOX_EDITS,
+    FIELD_EDITS,
+    OUTLINE_EDITS,
+    PAGE_EDITS,
+    TEXT_EDITS,
+)
 from oldschoolpdf.domain.errors import OldSchoolPDFError
 from oldschoolpdf.domain.viewer import MAX_QUERY_LENGTH, MAX_RASTER_BYTES, MAX_SEARCH_HITS, PdfRect
 from oldschoolpdf.infrastructure.local_files import FileStamp, file_stamp
@@ -23,6 +30,9 @@ from oldschoolpdf.infrastructure.pdf_editing import (
     select_pages,
     update_field,
 )
+from oldschoolpdf.infrastructure.pdf_forms import add_field, remove_field
+from oldschoolpdf.infrastructure.pdf_outline import read_outline, set_outline, suggest_outline
+from oldschoolpdf.infrastructure.pdf_pages import crop_pages, insert_blank, resize_pages
 from oldschoolpdf.infrastructure.pdf_security import (
     encrypt_copy,
     protected,
@@ -238,6 +248,16 @@ class PdfEngine:
     def objects(self, page: int) -> dict:
         return read_objects(self._page(page))
 
+    def outline(self) -> dict:
+        self._page(0)
+        return read_outline(self.document)
+
+    def suggest_outline(self) -> dict:
+        self._page(0)
+        if not self._copy_allowed():
+            raise OldSchoolPDFError("Este PDF restringe a leitura do texto para sugestões.")
+        return suggest_outline(self.document)
+
     def _revision_result(self) -> dict:
         history = self.history
         return {
@@ -252,12 +272,25 @@ class PdfEngine:
     def edit(self, action: str, page: int, values: dict, scratch: str, confirmed: bool) -> dict:
         self._page(page)
         ensure_signature_ack(self.document, confirmed)
-        if action in PAGE_EDITS:
+        permissions = []
+        if action in PAGE_EDITS or action in OUTLINE_EDITS:
             permission = self._assembly_permission()
+        elif action in BOX_EDITS:
+            permission = pymupdf.PDF_PERM_MODIFY
         elif action in ANNOTATION_EDITS:
             permission = pymupdf.PDF_PERM_ANNOTATE
         elif action in TEXT_EDITS:
             permission = pymupdf.PDF_PERM_MODIFY
+            options = values.get("options")
+            if isinstance(options, dict) and options.get("overflow") == "new_page":
+                # Continuar o texto numa página nova também é montar o documento.
+                permissions.append(self._assembly_permission())
+        elif action in FIELD_EDITS:
+            if has_xfa(self.document):
+                raise OldSchoolPDFError("Formulários XFA não podem receber campos novos.")
+            # Criar ou excluir campos exige alterar o conteúdo e as anotações.
+            permission = pymupdf.PDF_PERM_MODIFY
+            permissions.append(pymupdf.PDF_PERM_ANNOTATE)
         elif action == "fill_field":
             if has_xfa(self.document):
                 raise OldSchoolPDFError(
@@ -266,12 +299,24 @@ class PdfEngine:
             permission = self._form_permissions()
         else:
             raise OldSchoolPDFError("Operação de edição desconhecida.")
-        if not self._allowed(permission):
+        if not all(self._allowed(item) for item in (permission, *permissions)):
             raise OldSchoolPDFError("As permissões do PDF restringem essa alteração.")
         report = None
         with self.history.read(self.history.current, self._password) as working:
-            if action in PAGE_EDITS:
+            if action == "insert_blank":
+                page = insert_blank(working, page, values)
+            elif action in PAGE_EDITS:
                 page = edit_pages(working, action, page, values)
+            elif action == "crop_pages":
+                page, report = crop_pages(working, values)
+            elif action == "resize_pages":
+                page, report = resize_pages(working, values)
+            elif action in OUTLINE_EDITS:
+                report = set_outline(working, values)
+            elif action == "add_field":
+                report = {"xref": add_field(working[page], values)}
+            elif action == "remove_field":
+                remove_field(working[page], values)
             elif action in TEXT_EDITS:
                 report = replace_blocks(working, page, values["blocks"], values.get("options", {}))
             elif action == "fill_field":

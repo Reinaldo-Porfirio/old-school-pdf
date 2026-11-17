@@ -4,7 +4,7 @@
 import sys
 from pathlib import Path
 
-from PyInstaller.utils.hooks import copy_metadata
+from PyInstaller.utils.hooks import collect_data_files, copy_metadata
 
 root = Path(SPECPATH).parent
 assets = root / "build" / "assets"
@@ -16,7 +16,7 @@ BUNDLED = [
     "asn1crypto", "cryptography", "cffi", "pycparser", "lxml", "aiohttp",
     "aiohappyeyeballs", "aiosignal", "attrs", "certifi", "frozenlist", "idna",
     "multidict", "propcache", "yarl", "oscrypto", "tzdata", "tzlocal", "uritools",
-    "setuptools",
+    "setuptools", "python-docx", "typing-extensions",
 ]  # fmt: skip
 licenses = [(str(path), "licenses") for path in (root / "packaging" / "licenses").glob("*.txt")]
 python_license = Path(sys.base_prefix) / "LICENSE.txt"
@@ -31,6 +31,8 @@ a = Analysis(
         (str(root / "THIRD_PARTY_NOTICES.md"), "."),
         *licenses,
         *[entry for name in BUNDLED for entry in copy_metadata(name)],
+        # Modelo de documento e estilos que o python-docx usa para criar o .docx.
+        *collect_data_files("docx"),
     ],
     # O leitor é importado sob demanda; declarar garante que entre no pacote.
     hiddenimports=["oldschoolpdf.infrastructure.pdf_worker"],

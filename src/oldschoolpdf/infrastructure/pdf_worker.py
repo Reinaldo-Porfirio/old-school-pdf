@@ -31,6 +31,8 @@ def main() -> None:
         "search": engine.search,
         "copy": engine.extract,
         "objects": engine.objects,
+        "outline": engine.outline,
+        "suggest_outline": engine.suggest_outline,
         "edit": engine.edit,
         "step": engine.step,
         "verify_signatures": engine.verify_signatures,

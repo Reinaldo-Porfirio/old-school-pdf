@@ -1,5 +1,31 @@
 # Alterações
 
+## 0.9.0 · 17/11/2026
+
+- **Converter para Word (.docx)**, com conversor próprio e offline: parágrafos com fonte,
+  tamanho, negrito, itálico e cor; linhas e hifenização reunidas em parágrafos; títulos com os
+  estilos do Word; tabelas com grade; imagens; links; uma página do Word para cada página do PDF,
+  com o mesmo tamanho e orientação. Páginas com OCR viram texto; digitalizações sem OCR entram
+  como imagem e o relatório avisa. O arquivo gravado é reaberto e conferido. Funciona em lote.
+- **Marcadores (sumário)**: a aba Índice mostra os marcadores e leva à página com um clique;
+  o editor adiciona, renomeia, muda a página, reordena e monta níveis, e sugere um sumário
+  pelos títulos do texto, ignorando cabeçalhos repetidos. Destinos exatos, links externos, cores
+  e estilos dos marcadores existentes são preservados; a gravação é conferida.
+- **Páginas**: inserir páginas em branco (mesmo tamanho da atual, A4, A5, Carta ou Ofício);
+  cortar margens (automático, medidas fixas ou restaurar o tamanho original), com aviso de que a
+  área cortada continua no arquivo; mudar o tamanho do papel, centralizando o conteúdo sem
+  distorcer e levando junto anotações, links e campos, em páginas giradas ou já cortadas. O texto
+  de cada página é conferido antes e depois.
+- **Criar campos de formulário** desenhando na página: texto, texto de várias linhas, caixa de
+  marcar e lista suspensa, com nome único, dica, valor inicial, limite de caracteres e
+  preenchimento obrigatório. Campos em páginas giradas saem na orientação certa. Também é
+  possível excluir campos.
+- **Edição de texto**: nova opção para continuar o texto que não couber em páginas novas,
+  inseridas logo depois da atual, sem reduzir a fonte. Cada página nova é conferida.
+- O relatório do lote ganhou o botão **Abrir pasta do resultado**.
+- Permissões do PDF respeitadas em todas as operações novas: montar o documento para páginas e
+  marcadores, alterar o conteúdo para corte e tamanho, alterar conteúdo e anotações para campos.
+
 ## 0.8.1 · 14/11/2026
 
 - Correção: ao fechar uma aba editada, o programa espera o processo do PDF terminar antes de

@@ -383,6 +383,8 @@ class PdfTab(QWidget):
             message = self.tr("Arraste sobre toda a área sensível para marcá-la. Esc cancela.")
         elif kind == "visual_signature":
             message = self.tr("Arraste o retângulo onde ficará a assinatura visual. Esc cancela.")
+        elif kind == "field":
+            message = self.tr("Arraste o retângulo do novo campo de formulário. Esc cancela.")
         else:
             message = self.tr("Arraste uma área na página para aplicar a ferramenta. Esc cancela.")
         self.feedback.emit(message)

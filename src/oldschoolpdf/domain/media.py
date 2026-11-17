@@ -21,6 +21,7 @@ class MediaOperation(StrEnum):
     OPTIMIZE = "optimize"
     SPLIT = "split"
     MERGE = "merge"
+    DOCX = "docx"
 
 
 MEDIA_LABELS = {
@@ -32,6 +33,7 @@ MEDIA_LABELS = {
     MediaOperation.OPTIMIZE: "Otimizar PDF",
     MediaOperation.SPLIT: "Dividir por quantidade de páginas",
     MediaOperation.MERGE: "Mesclar PDFs",
+    MediaOperation.DOCX: "Converter para Word (.docx)",
 }
 
 

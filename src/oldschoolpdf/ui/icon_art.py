@@ -231,6 +231,35 @@ ART: dict[str, str] = {
         '<circle cx="12" cy="12" r="10" fill="url(#gB)" stroke="#123f7a"/>'
         '<path d="M14 6.5 8.5 12l5.5 5.5z" fill="#fff"/>'
     ),
+    "blank_page": _page(3, 2)
+    + '<circle cx="17" cy="17" r="5.5" fill="url(#gGr)" stroke="#256a10"/>'
+    '<path d="M17 14v6M14 17h6" stroke="#fff" stroke-width="2.2"/>',
+    "crop": (
+        '<rect x="7" y="7" width="10" height="10" fill="url(#gP)" stroke="#99aabb" '
+        'stroke-dasharray="2 1.5"/>'
+        '<path d="M6 2v16h16" fill="none" stroke="#3a4a5a" stroke-width="2.6"/>'
+        '<path d="M2 6h16v16" fill="none" stroke="#d0620a" stroke-width="2.6"/>'
+    ),
+    "resize": _page(4, 2, 16, 20)
+    + '<path d="M8 17l8-8M8 17v-4M8 17h4M16 9h-4M16 9v4" stroke="#1957b8" stroke-width="1.9" '
+    'fill="none" stroke-linecap="round"/>',
+    "bookmark": _page(3, 2)
+    + '<path d="M11 1.5h8v20l-4-3.5-4 3.5z" fill="url(#gR)" stroke="#7a1a10" '
+    'stroke-linejoin="round"/><path d="M13 5h4" stroke="#ffd0c8" stroke-width="1.2"/>',
+    "field": (
+        '<rect x="2" y="6" width="20" height="12" rx="1" fill="#fff" stroke="#3a4a5a"/>'
+        '<rect x="3" y="7" width="18" height="2" fill="#dbe6f3"/>'
+        '<path d="M6 10.5v5M5 10.5h2M5 15.5h2" stroke="#1957b8" stroke-width="1.4"/>'
+        '<circle cx="18" cy="17" r="4.5" fill="url(#gGr)" stroke="#256a10"/>'
+        '<path d="M18 14.6v4.8M15.6 17h4.8" stroke="#fff" stroke-width="1.8"/>'
+    ),
+    "word": (
+        '<path d="M6 2h10l5 5v15H6z" fill="url(#gP)" stroke="#5a6b80"/>'
+        '<path d="M16 2v5h5" fill="#eef2f7" stroke="#5a6b80"/>'
+        '<rect x="2" y="9" width="13" height="10" rx="1" fill="url(#gB)" stroke="#123f7a"/>'
+        '<path d="M4.5 12h8M4.5 14.5h8M4.5 17h5" stroke="#fff" stroke-width="1.2"/>'
+        '<path d="M17 11h3M17 14h3M17 17h3" stroke="#99aabb"/>'
+    ),
 }
 
 # Nomes de comandos que reaproveitam um desenho existente.
@@ -244,6 +273,13 @@ ALIASES = {
     "verify_signatures": "shield",
     "capabilities": "settings",
     "password": "lock",
+    "insert_blank": "blank_page",
+    "crop_pages": "crop",
+    "resize_pages": "resize",
+    "outline": "bookmark",
+    "add_field": "field",
+    "remove_field": "remove",
+    "to_word": "word",
 }
 
 LOGO = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">

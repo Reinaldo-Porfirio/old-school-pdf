@@ -146,6 +146,11 @@ def describe_report(report: dict) -> str:
         parts.append(f"{report['expanded']} bloco(s) expandido(s) para baixo.")
     if report.get("links_restored"):
         parts.append(f"{report['links_restored']} link(s) preservado(s).")
+    if report.get("pages_added"):
+        parts.append(
+            f"O restante do texto continua em {report['pages_added']} página(s) nova(s), "
+            "logo depois desta."
+        )
     return " ".join(parts)
 
 
@@ -341,6 +346,20 @@ class TextEditDialog(QDialog):
         form.addRow("Fonte:", self.shrink)
         self.expand = QCheckBox("Expandir o bloco para baixo, se houver espaço livre")
         form.addRow(self.expand)
+        self.overflow = QCheckBox("Continuar o restante numa página nova, logo depois desta")
+        self.overflow.setObjectName("text_overflow")
+        self.overflow.setToolTip(
+            "O bloco ocupa o espaço livre abaixo dele, sem reduzir a fonte, e o texto que "
+            "sobrar segue em páginas novas inseridas depois desta."
+        )
+        info = self.viewer.info
+        if not (info and info.can_organize):
+            self.overflow.setEnabled(False)
+            self.overflow.setToolTip("As permissões do PDF não permitem inserir páginas.")
+        form.addRow(self.overflow)
+        # Com a continuação, o texto mantém o tamanho e não precisa reduzir nem expandir.
+        self.overflow.toggled.connect(lambda on: self.shrink.setEnabled(not on))
+        self.overflow.toggled.connect(lambda on: self.expand.setEnabled(not on))
         self.system_fonts = QCheckBox("Usar as fontes instaladas no Windows (mais fiéis)")
         self.system_fonts.setChecked(True)
         form.addRow(self.system_fonts)
@@ -572,6 +591,7 @@ class TextEditDialog(QDialog):
             "shrink": self.shrink.currentData(),
             "expand": self.expand.isChecked(),
             "system_fonts": self.system_fonts.isChecked(),
+            "overflow": "new_page" if self.overflow.isChecked() else "none",
         }
 
     def _payload(self) -> list[dict] | None:

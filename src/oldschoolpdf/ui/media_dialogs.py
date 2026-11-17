@@ -3,7 +3,8 @@
 from os.path import abspath, normcase
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtCore import QSize, Qt, QUrl, Signal
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -42,6 +43,7 @@ from oldschoolpdf.domain.tasks import TaskState
 from oldschoolpdf.ui.docks import STATE_LABELS
 
 RANGE_OPERATIONS = {
+    MediaOperation.DOCX,
     MediaOperation.OCR,
     MediaOperation.RENDER,
     MediaOperation.TEXT,
@@ -67,6 +69,11 @@ OPERATION_NOTES = {
     MediaOperation.OPTIMIZE: "Compara tamanhos e publica uma cópia quando houver redução.",
     MediaOperation.SPLIT: "Cria partes consecutivas. A última pode conter menos páginas.",
     MediaOperation.MERGE: "Os PDFs entram na ordem da lista e produzem um único arquivo.",
+    MediaOperation.DOCX: (
+        "Cria um documento editável no Word ou no LibreOffice, com parágrafos, títulos, "
+        "negrito, itálico, tabelas, imagens e links, e uma quebra para cada página. "
+        "A diagramação pode mudar um pouco. Digitalizações precisam de OCR antes."
+    ),
 }
 
 
@@ -363,6 +370,10 @@ class BatchReport(QDialog):
         self.retry.clicked.connect(self._retry)
         self.open_button = buttons.addButton("Abrir PDF", QDialogButtonBox.ButtonRole.ActionRole)
         self.open_button.clicked.connect(self._open)
+        self.folder_button = buttons.addButton(
+            "Abrir pasta do resultado", QDialogButtonBox.ButtonRole.ActionRole
+        )
+        self.folder_button.clicked.connect(self._open_folder)
         root.addWidget(buttons)
         self.results.currentItemChanged.connect(self._selection)
         runner.changed.connect(self.refresh)
@@ -392,6 +403,9 @@ class BatchReport(QDialog):
             item.setToolTip(3, str(record.result or ""))
             if record.result and record.result.suffix == ".pdf":
                 item.setData(3, Qt.ItemDataRole.UserRole, str(record.result))
+            if record.result:
+                folder = record.result if record.result.is_dir() else record.result.parent
+                item.setData(0, Qt.ItemDataRole.UserRole, str(folder))
         self.results.setCurrentItem(self.results.topLevelItem(max(0, current)))
         done = sum(record.state.terminal for record in records)
         success = sum(record.state == TaskState.SUCCEEDED for record in records)
@@ -404,6 +418,7 @@ class BatchReport(QDialog):
     def _selection(self, *_args) -> None:
         item = self.results.currentItem()
         self.open_button.setEnabled(bool(item and item.data(3, Qt.ItemDataRole.UserRole)))
+        self.folder_button.setEnabled(bool(item and item.data(0, Qt.ItemDataRole.UserRole)))
         self.entry_note.setText("\n".join((item.text(2), item.text(3))) if item else "")
 
     def _copy(self) -> None:
@@ -419,6 +434,12 @@ class BatchReport(QDialog):
         ):
             self.accept()
             self.open_pdf.emit(Path(path))
+
+    def _open_folder(self) -> None:
+        item = self.results.currentItem()
+        folder = item.data(0, Qt.ItemDataRole.UserRole) if item else None
+        if folder and Path(folder).is_dir():
+            QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
 
     def _retry(self) -> None:
         self.accept()

@@ -20,6 +20,7 @@ MEDIA_ACTIONS = {
     "ocr": ("Reconhecer texto…", "ocr", MediaOperation.OCR),
     "images": ("Exportar PDF como imagens…", "image", MediaOperation.RENDER),
     "images_pdf": ("Reunir imagens em PDF…", "image", MediaOperation.IMAGES_PDF),
+    "to_word": ("Converter para Word (.docx)…", "word", MediaOperation.DOCX),
     "extract_text": ("Extrair texto UTF-8…", "text", MediaOperation.TEXT),
     "extract_images": ("Extrair imagens incorporadas…", "image", MediaOperation.EXTRACT_IMAGES),
     "compress": ("Otimizar PDF…", "save", MediaOperation.OPTIMIZE),

@@ -84,12 +84,16 @@ def test_frozen_worker() -> None:
             [str(EXE), WORKER_FLAG], stdin=subprocess.PIPE, stdout=subprocess.PIPE
         )
 
-        def ask(operation: str, **arguments) -> tuple[dict, bytes]:
-            message = json.dumps({"op": operation, "args": arguments}) + "\n"
+        def ask(command: str, /, **arguments) -> tuple[dict, bytes]:
+            message = json.dumps({"op": command, "args": arguments}) + "\n"
             worker.stdin.write(message.encode())
             worker.stdin.flush()
-            size, length = FRAME.unpack(worker.stdout.read(FRAME.size))
-            return json.loads(worker.stdout.read(size)), worker.stdout.read(length)
+            while True:
+                size, length = FRAME.unpack(worker.stdout.read(FRAME.size))
+                header, body = json.loads(worker.stdout.read(size)), worker.stdout.read(length)
+                # Conversões em lote mandam quadros de progresso antes da resposta.
+                if "progress" not in header:
+                    return header, body
 
         try:
             opened, _ = ask("open", path=str(pdf))
@@ -110,19 +114,49 @@ def test_frozen_worker() -> None:
             preview, preview_pixels = ask(
                 "preview_text", page=0, blocks=edit, options={}, width=400, height=500, dpr=1.0
             )
+            # Marcadores, páginas novas e tamanho do papel (0.9).
+            outline, _ = ask("outline")
+            work = Path(scratch) / "revisoes"
+            work.mkdir()
+            blank, _ = ask("edit", action="insert_blank", page=0, values={"size": "a4"},
+                           scratch=str(work), confirmed=False)  # fmt: skip
+            resized, _ = ask("edit", action="resize_pages", page=0,
+                             values={"ranges": [[0, 1]], "size": "letter"},
+                             scratch=str(work), confirmed=False)  # fmt: skip
+            # Conversão para Word: python-docx e o modelo de documento empacotados.
+            word = Path(scratch) / "word"
+            word.mkdir()
+            converted, _ = ask("process_media", operation="docx", inputs=[str(pdf)],
+                               stage=str(word), options={})  # fmt: skip
         finally:
             worker.stdin.close()
             worker.wait(timeout=30)
         problems = [
             reply["error"]
-            for reply in (opened, frame, found, signatures, blocks, preview)
+            for reply in (
+                opened,
+                frame,
+                found,
+                signatures,
+                blocks,
+                preview,
+                outline,
+                blank,
+                resized,
+                converted,
+            )
             if "error" in reply
         ]
         if problems or not pixels or not preview_pixels:
             raise SystemExit(f"O leitor empacotado falhou: {problems or 'imagem vazia'}")
-    print("Leitor empacotado abriu, renderizou, pesquisou, verificou assinaturas e editou texto.")
+        if blank["result"]["page_count"] != 2 or not (word / "documento.docx").stat().st_size:
+            raise SystemExit("O leitor empacotado não inseriu a página ou não gerou o .docx.")
+    print(
+        "Leitor empacotado abriu, renderizou, pesquisou, verificou assinaturas, editou texto, "
+        "leu marcadores, inseriu e redimensionou páginas e converteu para Word."
+    )
     bundled = {path.name.split("-")[0].lower() for path in APP_DIR.glob("_internal/*.dist-info")}
-    if missing := {"pymupdf", "pyhanko"} - bundled:
+    if missing := {"pymupdf", "pyhanko", "python_docx"} - bundled:
         raise SystemExit(f"Metadados ausentes no pacote: {sorted(missing)}")
 
 

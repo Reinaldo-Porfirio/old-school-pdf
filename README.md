@@ -19,10 +19,10 @@ completos. Nada de minimalismo.
 
 | Arquivo | Para quem |
 |---|---|
-| [**OldSchoolPDF-0.8.1-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.8.1/OldSchoolPDF-0.8.1-setup.exe) (≈ 43 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
-| [**OldSchoolPDF-0.8.1-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.8.1/OldSchoolPDF-0.8.1-sem-instalar.zip) (≈ 58 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
+| [**OldSchoolPDF-0.9.0-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.9.0/OldSchoolPDF-0.9.0-setup.exe) (≈ 45 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
+| [**OldSchoolPDF-0.9.0-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.9.0/OldSchoolPDF-0.9.0-sem-instalar.zip) (≈ 59 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
 
-**Requisitos:** Windows 10 ou 11 de 64 bits e cerca de 130 MB livres em disco. Não precisa
+**Requisitos:** Windows 10 ou 11 de 64 bits e cerca de 140 MB livres em disco. Não precisa
 de Python, de conta nem de internet. Foi testado no Windows 11. O Windows 10 é aceito,
 mas ainda não foi testado.
 
@@ -30,19 +30,24 @@ mas ainda não foi testado.
 > código, então o SmartScreen avisa na primeira vez. Clique em **Mais informações >
 > Executar assim mesmo**. Para conferir se o arquivo é o original, compare o
 > SHA-256 com o publicado na [página da versão](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/latest)
-> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.8.1-setup.exe`).
+> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.9.0-setup.exe`).
 
 ## O que ele faz
 
 - **Ler:** abas, miniaturas, zoom, rolagem contínua, busca com acentos e cópia de texto.
-- **Organizar:** mesclar, dividir, extrair, reordenar arrastando miniaturas, girar e excluir páginas.
+- **Organizar:** mesclar, dividir, extrair, reordenar arrastando miniaturas, girar e excluir páginas,
+  inserir páginas em branco, cortar margens e mudar o tamanho do papel (A4, A5, Carta, Ofício).
+- **Marcadores:** índice clicável no painel lateral e editor de sumário, com sugestão automática
+  pelos títulos do texto.
 - **Anotar:** destaque, sublinhado, comentários, caixas de texto, carimbos, formas e imagens.
 - **Editar o texto original:** troca o texto de parágrafos, títulos e valores direto no PDF,
   com prévia lado a lado, negrito e itálico, a mesma fonte do documento quando ela estiver
   instalada no Windows e verificação automática do resultado ([como funciona](#editar-o-texto-do-pdf)).
 - **Imprimir:** diálogo do Windows com intervalo, cópias e ajuste automático ao papel.
-- **Formulários:** preenche campos AcroForm compatíveis.
-- **Converter:** imagens para PDF, PDF para PNG/JPEG, extração de texto e imagens, compactação e lotes.
+- **Formulários:** cria campos de texto, caixas de marcar e listas desenhando na página, e preenche
+  campos AcroForm compatíveis.
+- **Converter:** PDF para Word (.docx) editável, imagens para PDF, PDF para PNG/JPEG, extração de
+  texto e imagens, compactação e lotes ([sobre o Word](#converter-para-word)).
 - **OCR local:** torna pesquisáveis os PDFs digitalizados, em português e inglês ([veja como ativar](#ativar-o-ocr)).
 - **Segurança:** senha AES-256, remoção de metadados, redação rasterizada, assinatura visual e
   assinatura digital com certificado PKCS#12, com verificação offline.
@@ -122,6 +127,15 @@ sozinho, para diagnóstico.
 - Em **Documento**, mescle PDFs e revise a ordem e a contagem de páginas. Divida
   ou extraia intervalos como `2–4,6–8`. Arraste miniaturas para reordenar ou use
   o menu Documento para mover, girar e excluir páginas da cópia de trabalho.
+- Ainda em **Documento**: **Inserir páginas em branco**, **Cortar margens** (automático,
+  medidas fixas ou restaurar) e **Mudar o tamanho do papel**, que centraliza e ajusta o
+  conteúdo sem distorcer. O corte só esconde a área de fora; para apagar de verdade, use a
+  redação.
+- **Documento > Marcadores** edita o sumário: adicionar, renomear, mudar a página, subir,
+  descer, recuar e avançar níveis, ou **sugerir pelos títulos do texto**. A aba **Índice** do
+  painel lateral mostra os marcadores; clique em um para ir à página.
+- **Documento > Criar campo de formulário**: arraste o retângulo na página e escolha texto,
+  texto de várias linhas, caixa de marcar ou lista suspensa.
 - Em **Editar > Anotações** ou no painel **Edição**, escolha a ferramenta e
   indique a área na página. Selecione uma anotação para mover, editar o texto
   ou excluí-la conforme o tipo. O comando **Preencher formulário** lista os
@@ -153,11 +167,28 @@ Como a edição é feita com segurança:
 4. Confere o texto gravado, os pixels fora da área editada, a cor visível, os links e as
    anotações. Se algo divergir, a edição é cancelada e nada muda.
 
-Se o texto novo for maior, escolha reduzir a fonte (até 85% ou 70%) ou expandir o bloco para
-baixo até o próximo conteúdo. Não podem ser editados: páginas digitalizadas (o texto é
+Se o texto novo for maior, escolha reduzir a fonte (até 85% ou 70%), expandir o bloco para
+baixo até o próximo conteúdo ou **continuar o restante numa página nova**, inserida logo depois
+da atual, sem reduzir a fonte. Não podem ser editados: páginas digitalizadas (o texto é
 imagem), a camada invisível do OCR, texto girado ou vertical, texto sobre campos de formulário
 e escrita da direita para a esquerda. Tabelas e colunas funcionam bloco a bloco. Editar um PDF
 assinado digitalmente invalida a assinatura; o programa avisa antes.
+
+## Converter para Word
+
+**Ferramentas > Converter para Word (.docx)** cria um documento editável, sem internet e sem
+serviço online. O conversor é do próprio projeto:
+
+- o texto vira parágrafos com a fonte, o tamanho, o negrito, o itálico e a cor do PDF, e as
+  linhas quebradas voltam a formar parágrafos (inclusive palavras hifenizadas);
+- títulos ganham os estilos de título do Word, o que deixa o painel de navegação dele pronto;
+- tabelas com grade viram tabelas do Word; imagens e links são mantidos;
+- cada página do PDF começa numa página nova, com o mesmo tamanho e orientação;
+- páginas com OCR viram texto; digitalizações sem OCR entram como imagem, e o relatório avisa.
+
+O resultado segue o fluxo do texto, como um documento digitado. Colunas, caixas posicionadas e
+desenhos vetoriais podem mudar de lugar ou ficar de fora. A conversão usa o arquivo gravado no
+disco; salve as alterações da aba antes. Funciona em lote, com vários PDFs de uma vez.
 
 ## Proteger, redigir e assinar cópias
 

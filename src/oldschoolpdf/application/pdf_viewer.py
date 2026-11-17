@@ -15,7 +15,7 @@ from PySide6.QtCore import QObject, QTimer, Signal
 from oldschoolpdf.application.contracts import ImageBuffer
 from oldschoolpdf.application.job_service import JobRegistry
 from oldschoolpdf.application.pdf_output import PdfOutputTask
-from oldschoolpdf.domain.editing import AnnotationInfo, FormField
+from oldschoolpdf.domain.editing import AnnotationInfo, FormField, OutlineEntry
 from oldschoolpdf.domain.models import DocumentSession, SignatureState
 from oldschoolpdf.domain.tasks import TaskSpec, TaskState
 from oldschoolpdf.domain.text_editing import block_from_dict
@@ -189,6 +189,10 @@ class PdfViewer(QObject):
     text_preview_ready = Signal(object, object)
     text_edited = Signal(object)
     text_edit_failed = Signal(str)
+    outline_changed = Signal()
+    outline_suggested = Signal(object)
+    outline_suggest_failed = Signal(str)
+    edit_reported = Signal(str, object)
 
     def __init__(self, path: Path, workspace: PdfWorkspace) -> None:
         super().__init__(workspace)
@@ -214,6 +218,12 @@ class PdfViewer(QObject):
         self.busy = ""
         self.annotations: tuple[AnnotationInfo, ...] = ()
         self.fields: tuple[FormField, ...] = ()
+        self.outline: tuple[OutlineEntry, ...] = ()
+        self.outline_signature = ""
+        self.outline_error = ""
+        self.outline_loaded = False
+        self._outline_pending = False
+        self._last_action = ""
         self.output: PdfOutputTask | None = None
         self._save_revision = False
         self._command: tuple[str, dict] | None = None
@@ -360,6 +370,9 @@ class PdfViewer(QObject):
             self._objects_page = self.page
             self.workspace.wake(self)
 
+    def suggest_outline(self) -> bool:
+        return self._queue_command("suggest_outline", {}, "Procurando títulos no documento…")
+
     def _queue_command(self, operation: str, arguments: dict, label: str) -> bool:
         if self.state != "ready" or self.busy:
             return False
@@ -380,6 +393,7 @@ class PdfViewer(QObject):
             except OSError:
                 self.message.emit("Não foi possível criar a pasta temporária de trabalho.")
                 return False
+        self._last_action = action
         return self._queue_command(
             "edit",
             {
@@ -519,6 +533,8 @@ class PdfViewer(QObject):
         self._continuous.clear()
         self.annotations = ()
         self.fields = ()
+        self.outline_loaded = False
+        self._outline_pending = True
         self.cancel_search()
         self.hits.clear()
         self.selected_hit = -1
@@ -607,6 +623,9 @@ class PdfViewer(QObject):
         if self._objects_page is not None:
             page, self._objects_page = self._objects_page, None
             return self._send("objects", {"page": page}, page)
+        if self._outline_pending:
+            self._outline_pending = False
+            return self._send("outline", {}, self.revision)
         if self._continuous:
             return self._send_raster(self._continuous.popleft())
         if self._thumbs:
@@ -657,6 +676,21 @@ class PdfViewer(QObject):
                 if self._editing_text:
                     self._editing_text = False
                     self.text_edited.emit(reply["result"].get("report", {}))
+                elif operation == "edit":
+                    self.edit_reported.emit(self._last_action, reply["result"].get("report") or {})
+            elif operation == "outline":
+                if token == self.revision:
+                    result = reply["result"]
+                    self.outline = tuple(OutlineEntry(**entry) for entry in result["entries"])
+                    self.outline_signature = result["signature"]
+                    self.outline_error = ""
+                    self.outline_loaded = True
+                    self.outline_changed.emit()
+            elif operation == "suggest_outline":
+                self.busy = ""
+                self.changed.emit()
+                entries = tuple(OutlineEntry(**entry) for entry in reply["result"]["entries"])
+                self.outline_suggested.emit(entries)
             elif operation == "text_blocks":
                 result = reply["result"]
                 blocks = tuple(block_from_dict(entry) for entry in result["blocks"])
@@ -708,6 +742,8 @@ class PdfViewer(QObject):
                 SignatureState.SIGNED if self.info.signed else SignatureState.UNKNOWN
             )
             self.state = "ready"
+            self.outline_loaded = False
+            self._outline_pending = True
             self.page = min(self.page, self.info.page_count - 1)
             self.notice = "O leitor reparou a estrutura em memória." if self.info.repaired else ""
             if self._open_path != self.session.source_path:
@@ -776,6 +812,17 @@ class PdfViewer(QObject):
                 self.message.emit(error)
         elif operation == "objects" and token == self.page:
             self.message.emit(error)
+        elif operation == "outline":
+            if token == self.revision:
+                self.outline = ()
+                self.outline_signature = ""
+                self.outline_error = error
+                self.outline_loaded = True
+                self.outline_changed.emit()
+        elif operation == "suggest_outline":
+            self.busy = ""
+            self.changed.emit()
+            self.outline_suggest_failed.emit(error)
         elif operation == "search":
             if self.searching and token == self._search_generation:
                 self.search_notice = error
@@ -798,6 +845,10 @@ class PdfViewer(QObject):
         self._thumbs.clear()
         self._continuous.clear()
         self.annotations = self.fields = ()
+        self.outline = ()
+        self.outline_signature = ""
+        self.outline_loaded = False
+        self._outline_pending = False
         self.workspace.invalidate(self.session.session_id)
         if self.output:
             self._finish_export(error)

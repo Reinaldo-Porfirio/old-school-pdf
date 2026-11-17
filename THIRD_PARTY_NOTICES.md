@@ -1,6 +1,6 @@
-# Avisos de terceiros · Old School PDF 0.8.1
+# Avisos de terceiros · Old School PDF 0.9.0
 
-Atualizado em 10/11/2026. O código do Old School PDF usa **AGPL-3.0-or-later**.
+Atualizado em 17/11/2026. O código do Old School PDF usa **AGPL-3.0-or-later**.
 Cada componente de terceiros mantém os termos de quem o publicou. O `uv.lock`
 registra as versões e os hashes resolvidos.
 
@@ -19,6 +19,9 @@ O projeto é distribuído de duas formas:
 | PySide6-Essentials / QtCore, QtGui, QtWidgets, QtSvg | 6.12.0 | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only; usada a opção LGPLv3; https://pypi.org/project/PySide6-Essentials/ |
 | shiboken6 | 6.12.0 | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only; https://pypi.org/project/shiboken6/ |
 | PyMuPDF e MuPDF | 2.1 e 1.28.6 | Opção GNU AGPLv3 da licença dupla da Artifex. [Fontes](https://github.com/pymupdf/PyMuPDF) · [Termos](https://pymupdf.readthedocs.io/en/latest/about.html#license-and-copyright) |
+| python-docx | 1.2.0 | MIT; gera os documentos do Word na conversão de PDF para .docx. https://github.com/python-openxml/python-docx |
+| lxml | 6.1.3 | BSD-3-Clause e avisos do wheel (libxml2, libxslt); dependência do python-docx e do pyHanko. https://github.com/lxml/lxml |
+| typing_extensions | 4.16.0 | PSF-2.0; dependência do python-docx. https://github.com/python/typing_extensions |
 
 PySide6, shiboken e Qt: © The Qt Company Ltd. e demais contribuidores, conforme
 os avisos originais de cada pacote. Fontes e avisos oficiais:
@@ -101,7 +104,9 @@ são gerados por `packaging/build.py`. O executável contém:
   separados em `_internal/PySide6` e podem ser substituídas por versões compatíveis
   modificadas pelo usuário. Os textos da LGPL-3.0 e da GPL-3.0 vão em `_internal/licenses`;
 - **PyMuPDF e MuPDF** sob AGPL-3.0. O código-fonte completo e correspondente do
-  aplicativo é este repositório, na tag da versão (por exemplo, `v0.8.1`);
+  aplicativo é este repositório, na tag da versão (por exemplo, `v0.9.0`);
+- **python-docx**, **lxml** e **typing_extensions**, usados na conversão para Word, com
+  o modelo de documento do python-docx e as licenças em `_internal/*.dist-info`;
 - **pyHanko** e as dependências da tabela acima, com os arquivos de licença de cada
   pacote em `_internal/*.dist-info`;
 - **setuptools** 84.2.1 (MIT), incluído pelo PyInstaller como dependência de execução.

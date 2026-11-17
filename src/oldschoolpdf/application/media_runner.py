@@ -22,6 +22,7 @@ FOLDER_LABELS = {
     MediaOperation.OPTIMIZE: "Otimizado",
     MediaOperation.SPLIT: "Partes",
     MediaOperation.MERGE: "PDFs mesclados",
+    MediaOperation.DOCX: "Word",
 }
 
 

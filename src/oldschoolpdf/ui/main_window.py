@@ -48,6 +48,7 @@ from oldschoolpdf.ui.document_tools import DocumentTools
 from oldschoolpdf.ui.edit_dialogs import local_pdf_drops
 from oldschoolpdf.ui.icons import app_icon, command_icon
 from oldschoolpdf.ui.media_tools import MEDIA_ACTIONS, MediaTools
+from oldschoolpdf.ui.organize_tools import OrganizeTools
 from oldschoolpdf.ui.pages import CapabilitiesPage, GuidePage, HomePage
 from oldschoolpdf.ui.pdf_tab import ZOOM_LEVELS, PdfTab
 from oldschoolpdf.ui.print_tools import PrintTools
@@ -104,6 +105,7 @@ class MainWindow(QMainWindow):
         self.security_tools = SecurityTools(self)
         self.print_tools = PrintTools(self)
         self.text_tools = TextTools(self)
+        self.organize_tools = OrganizeTools(self)
         self._active_pdf: PdfTab | None = None
         self.setAcceptDrops(True)
         self.preferences = settings.load_preferences()
@@ -291,6 +293,32 @@ class MainWindow(QMainWindow):
                 self.document_tools.remove_object,
             ),
             ("forms", self.tr("Preencher formulário…"), "form", self.document_tools.forms),
+            (
+                "insert_blank",
+                self.tr("Inserir páginas em branco…"),
+                "blank_page",
+                self.organize_tools.insert_blank,
+            ),
+            ("crop_pages", self.tr("Cortar margens…"), "crop", self.organize_tools.crop),
+            (
+                "resize_pages",
+                self.tr("Mudar o tamanho do papel…"),
+                "resize",
+                self.organize_tools.resize,
+            ),
+            ("outline", self.tr("&Marcadores (sumário)…"), "bookmark", self.organize_tools.outline),
+            (
+                "add_field",
+                self.tr("Criar campo de formulário"),
+                "field",
+                self.organize_tools.place_field,
+            ),
+            (
+                "remove_field",
+                self.tr("Excluir campo de formulário…"),
+                "remove",
+                self.organize_tools.remove_field,
+            ),
         ):
             action = self._action(
                 key, title, icon, lambda checked=False, handler=callback: self._with_pdf(handler)
@@ -350,7 +378,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
 
     def _create_docks(self) -> None:
-        self.navigation_dock = NavigationDock(self)
+        self.navigation_dock = NavigationDock(self.actions["outline"], self)
         self.navigation_dock.model.move_requested.connect(
             lambda source, target: self._with_pdf(
                 lambda tab: self.document_tools.move_page(tab, source, target)
@@ -442,6 +470,7 @@ class MainWindow(QMainWindow):
                 "|",
                 "ocr",
                 "batch",
+                "to_word",
                 "|",
                 "redact",
                 "visual_sign",
@@ -539,9 +568,17 @@ class MainWindow(QMainWindow):
                 "|",
                 "merge",
                 *PAGE_COMMANDS,
+                "insert_blank",
+                "|",
+                "crop_pages",
+                "resize_pages",
+                "|",
+                "outline",
                 "|",
                 "stamp",
                 "forms",
+                "add_field",
+                "remove_field",
             ),
         )
         self._menu(
@@ -551,6 +588,7 @@ class MainWindow(QMainWindow):
                 "preferences",
                 "capabilities",
                 "|",
+                "to_word",
                 "images",
                 "images_pdf",
                 "extract_text",
@@ -707,6 +745,12 @@ class MainWindow(QMainWindow):
                 )
             )
             tab.viewer.search_changed.connect(self._update_pdf_controls)
+            tab.viewer.outline_changed.connect(self._update_pdf_controls)
+            tab.viewer.edit_reported.connect(
+                lambda action, report, widget=tab: self.organize_tools.report(
+                    widget, action, report
+                )
+            )
             index = self.tabs.addTab(
                 tab, command_icon("document"), absolute.name.replace("&", "&&")
             )
@@ -729,6 +773,8 @@ class MainWindow(QMainWindow):
     def _apply_placement(self, tab: PdfTab, kind: str, region) -> None:
         if kind in {"redact", "visual_signature"}:
             self.security_tools.placed(tab, kind, region)
+        elif kind == "field":
+            self.organize_tools.placed_field(tab, region)
         else:
             self.document_tools.placed(tab, kind, region)
 
@@ -756,6 +802,7 @@ class MainWindow(QMainWindow):
         self.security_tools.update_controls(tab)
         self.print_tools.update_controls(tab)
         self.text_tools.update_controls(tab)
+        self.organize_tools.update_controls(tab)
         for key in (
             "find",
             "zoom_in",

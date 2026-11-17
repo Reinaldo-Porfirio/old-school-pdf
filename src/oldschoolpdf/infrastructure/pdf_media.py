@@ -12,6 +12,7 @@ from oldschoolpdf.domain.errors import OldSchoolPDFError
 from oldschoolpdf.domain.media import IMAGE_EXTENSIONS, MediaOperation, MediaOptions
 from oldschoolpdf.infrastructure.local_files import check_local, file_stamp
 from oldschoolpdf.infrastructure.media_output import MAX_MEDIA_FILES
+from oldschoolpdf.infrastructure.pdf_docx import pdf_to_docx
 from oldschoolpdf.infrastructure.pdf_editing import indices, select_pages
 from oldschoolpdf.infrastructure.pdf_ocr import MAX_MEDIA_PIXELS, raster, searchable_pdf
 from oldschoolpdf.infrastructure.pdf_storage import (
@@ -217,6 +218,8 @@ def _process_pdf(
             return _render_images(document, pages, stage, options, progress)
         if operation == MediaOperation.TEXT:
             return _text(document, pages, stage, progress)
+        if operation == MediaOperation.DOCX:
+            return pdf_to_docx(document, pages, stage / "documento.docx", progress)
         return _extract_images(document, pages, stage, progress)
 
 

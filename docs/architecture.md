@@ -182,3 +182,39 @@ subconjunto e a sobrepõe à real, reanexa links desanexados pela redação e co
 visível, pixels fora da área, links e anotações. Qualquer divergência levanta erro e a revisão
 não é criada. O diálogo `ui/text_edit_dialog.py` guarda o estilo de cada trecho numa
 propriedade do formato de caractere do Qt e envia os trechos como dados, nunca como HTML.
+
+## Páginas, marcadores, formulários e Word (0.9)
+
+As regras sem PyMuPDF ficam em `domain/editing.py`: tamanhos de papel, títulos e níveis de
+marcadores, nomes de campos. Três módulos novos de infraestrutura rodam no processo do PDF:
+
+- `pdf_pages.py`: `insert_blank`, `crop_pages` e `resize_pages`. O corte converte o retângulo
+  visível (com rotação) para o sistema da CropBox. O redimensionamento calcula a matriz do
+  espaço do PDF para a página visível antes e depois (`_view`: CropBox e rotação), desenha o
+  conteúdo antigo num fluxo novo com `cm` e um recorte na área que era visível, e leva as
+  coordenadas das anotações (`Rect`, `QuadPoints`, `InkList`, `Vertices`, `L`, `CL`, `RD`) pela
+  mesma matriz. As palavras da página são conferidas antes e depois.
+- `pdf_outline.py`: lê o sumário com uma assinatura (hash dos níveis, títulos e páginas), recria
+  com `set_toc(collapse=0)` preservando o destino original de quem não mudou de página e
+  confere o resultado. A sugestão usa o tamanho de fonte mais frequente como texto comum.
+- `pdf_forms.py`: cria e exclui widgets AcroForm. Em páginas giradas grava `/MK /R` para o texto
+  do campo sair na orientação certa.
+
+As ações `insert_blank`, `crop_pages`, `resize_pages`, `set_outline`, `add_field` e
+`remove_field` passam por `PdfEngine.edit`, como as demais, e cada uma exige a permissão
+correspondente do PDF. O processo também expõe `outline` e `suggest_outline`. Na interface,
+`ui/organize_tools.py` liga os comandos aos diálogos de `page_dialogs.py`, `outline_dialog.py` e
+`field_dialog.py`; o painel de navegação mostra o índice a partir de `PdfViewer.outline`, que é
+lido de novo a cada revisão.
+
+A continuação do texto (`overflow: "new_page"` em `replace_blocks`) mede com uma página gêmea
+quanto do texto cabe em cada área, por busca binária nas quebras de palavra. As páginas novas
+só são criadas depois de conferida a página editada, porque criar páginas invalida os objetos
+`Page` já carregados.
+
+`pdf_docx.py` converte para Word com o python-docx, no pipeline de `pdf_media.py`, como as
+outras conversões em lote. Para cada página: tabelas com grade (`find_tables`, com o módulo de
+layout por IA desligado), blocos de texto divididos em parágrafos pelas regras de
+`domain/text_editing.py`, imagens extraídas no formato original (ou renderizadas quando giradas)
+e links. A camada invisível do OCR vira texto e a imagem digitalizada sob ela é omitida. O
+arquivo é gravado, reaberto e conferido antes de ser publicado.

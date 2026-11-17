@@ -4,14 +4,18 @@ build-backend = "hatchling.build"
 
 [project]
 name = "old-school-pdf"
-version = "0.8.1"
+version = "0.9.0"
 description = "Suíte local para leitura, edição, OCR e segurança de PDFs"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 authors = [{name = "Reinaldo"}]
-dependencies = ["PySide6-Essentials==6.12.0", "PyMuPDF==2.1"]
+dependencies = [
+    "PySide6-Essentials==6.12.0",
+    "PyMuPDF==2.1",
+    "python-docx==1.2.0",
+]
 
 [project.optional-dependencies]
 signing = ["pyHanko==0.38.1"]

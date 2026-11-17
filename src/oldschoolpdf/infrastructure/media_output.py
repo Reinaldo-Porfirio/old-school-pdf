@@ -12,7 +12,7 @@ from oldschoolpdf.domain.errors import OldSchoolPDFError
 from oldschoolpdf.infrastructure.local_files import check_local, file_stamp
 
 MAX_MEDIA_FILES = 2000
-OUTPUT_EXTENSIONS = {".pdf", ".txt", ".png", ".jpg"}
+OUTPUT_EXTENSIONS = {".pdf", ".txt", ".png", ".jpg", ".docx"}
 
 
 @dataclass(frozen=True, slots=True)

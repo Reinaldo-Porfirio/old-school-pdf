@@ -37,6 +37,27 @@ escolher uma diretamente.
 - Arraste uma miniatura para a nova posição ou use **Reordenar páginas**. Use
   **Girar páginas do PDF** para gravar a orientação e **Excluir páginas** para
   remover intervalos da cópia de trabalho. A aba mostra a revisão atual.
+- **Inserir páginas em branco** coloca de 1 a 50 páginas antes ou depois da atual, no tamanho
+  dela ou em A4, A5, Carta ou Ofício, em retrato ou paisagem.
+- **Cortar margens** remove as bordas em branco (com uma folga escolhida), corta medidas fixas
+  de cada lado ou restaura o tamanho original. A área cortada deixa de aparecer e de ser
+  impressa, mas continua no arquivo. Para apagar informação, use a redação.
+- **Mudar o tamanho do papel** leva as páginas escolhidas para A4, A5, Carta ou Ofício. O
+  conteúdo é ampliado ou reduzido na mesma proporção e centralizado. Texto, links, anotações e
+  campos acompanham, e o texto continua editável.
+
+## Marcadores (sumário)
+
+- A aba **Índice** do painel Páginas e índice mostra os marcadores. Clique em um para ir à
+  página. Marcadores sem destino, como os de páginas excluídas, aparecem com um aviso.
+- **Documento > Marcadores** abre o editor: adicione um marcador da página atual, mude o título
+  e a página, use **Subir** e **Descer** para a ordem e **Recuar** e **Avançar** para os níveis.
+  Clique duas vezes num marcador para ver a página.
+- **Sugerir pelos títulos do texto** procura linhas curtas com fonte maior que o texto comum e
+  monta até 300 marcadores em três níveis, ignorando cabeçalhos e rodapés repetidos. Escolha
+  substituir a lista ou acrescentar ao final.
+- Marcadores existentes mantêm o destino exato, links externos, cor e estilo quando a página não
+  muda. Se o PDF mudou desde a abertura do editor, a gravação é recusada para não perder nada.
 
 ## Anotar e preencher
 
@@ -48,6 +69,11 @@ escolher uma diretamente.
   mover, editar texto e excluir dependem do tipo e das permissões do objeto.
 - **Documento > Preencher formulário** permite editar campos AcroForm da página
   atual. Campos com scripts ou formato incompatível permanecem em leitura passiva.
+- **Documento > Criar campo de formulário**: arraste o retângulo do campo na página e escolha
+  texto de uma linha, texto de várias linhas, caixa de marcar ou lista suspensa. O nome precisa
+  ser único no documento. Dica, valor inicial, limite de caracteres, tamanho da letra e
+  preenchimento obrigatório são opcionais. **Excluir campo de formulário** remove um campo da
+  página atual.
 - PDFs com indicação de assinatura digital pedem confirmação antes da edição ou
   exportação. A janela informa o risco de invalidar a assinatura na cópia.
 
@@ -60,7 +86,9 @@ prévia** para ver a cópia editada na aba ao lado. **Aplicar ao PDF** grava uma
 desfeita com Ctrl+Z, e **Restaurar bloco** desfaz as mudanças de um bloco antes de aplicar.
 
 Se o texto novo não couber, escolha reduzir a fonte até 85% ou 70% ou expandir o bloco para
-baixo, até o próximo conteúdo. A opção **Usar as fontes instaladas no Windows** deixa o
+baixo, até o próximo conteúdo. Com **Continuar o restante numa página nova**, o bloco ocupa o
+espaço livre abaixo dele sem reduzir a fonte e o texto que sobrar segue em páginas novas,
+inseridas logo depois da atual (até 20 páginas por edição). A opção **Usar as fontes instaladas no Windows** deixa o
 resultado mais fiel ao original. Blocos tracejados não podem ser editados; passe o mouse sobre
 eles na lista para ver o motivo. Páginas digitalizadas não têm texto editável.
 
@@ -108,6 +136,11 @@ em imagens de baixa resolução, inclinadas ou manuscritas.
 - **Exportar PDF como imagens** gera PNG ou JPEG no DPI escolhido. **Extrair texto
   UTF-8** gera um TXT separado por página e **Extrair imagens incorporadas** grava
   imagens disponíveis no PDF sem repetir o mesmo objeto.
+- **Converter para Word (.docx)** gera um documento editável com parágrafos, fontes, negrito,
+  itálico, cores, títulos com estilos do Word, tabelas com grade, imagens e links, e uma página
+  do Word por página do PDF. Páginas com OCR viram texto; digitalizações sem OCR entram como
+  imagem. O resultado segue o fluxo do texto: colunas, caixas posicionadas e desenhos vetoriais
+  podem mudar de lugar ou ficar de fora.
 - **Otimizar PDF** compacta a estrutura. Marque a redução de imagens se aceitar
   recompressão com perda. O relatório compara os tamanhos e a cópia é publicada
   quando houver redução.
@@ -115,7 +148,7 @@ em imagens de baixa resolução, inclinadas ou manuscritas.
   mesclar uma lista ordenada. O lote lê os arquivos salvos no disco. Use
   **Salvar como** para processar uma revisão que ainda esteja na aba.
 - O lote grava cada resultado em uma pasta nova. A fila aceita cancelamento por
-  tarefa ou por lote. O relatório permite abrir o PDF gerado, copiar os detalhes
+  tarefa ou por lote. O relatório permite abrir o PDF gerado, abrir a pasta do resultado, copiar os detalhes
   e repetir somente falhas e canceladas. Resultados concluídos continuam na saída.
 
 O processamento em lote aceita PDFs sem criptografia. Para gerar uma cópia

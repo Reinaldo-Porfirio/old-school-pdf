@@ -10,6 +10,7 @@ Qualquer divergência interrompe a edição sem gravar a revisão.
 """
 
 import hashlib
+import re
 from collections import Counter
 from dataclasses import asdict, replace
 from html import escape
@@ -48,6 +49,8 @@ PIXEL_MARGIN = 2.5
 PIXEL_THRESHOLD = 48
 PIXEL_TOLERANCE = 0.0008
 EXPAND_MARGIN = 18.0
+# Páginas novas que uma edição pode criar para o texto que não coube.
+MAX_CONTINUATION_PAGES = 20
 SAMPLE_SCALE = 3.0
 # Distâncias entre cores RGB (0 a 441) usadas para decidir se o texto aparece no fundo.
 SAME_COLOR = 40.0
@@ -343,6 +346,22 @@ def _html(runs: list[TextRun], styles: tuple[TextStyle, ...], fonts: dict) -> st
     return "".join(paragraphs)
 
 
+def _measure(
+    page: pymupdf.Page,
+    rect: pymupdf.Rect,
+    html: str,
+    css: str,
+    archive: pymupdf.Archive,
+) -> float:
+    """Sobra de altura do texto no retângulo, sem reduzir a fonte nem gravar nada."""
+    with pymupdf.open() as twin:
+        twin_page = twin.new_page(width=page.mediabox.width, height=page.mediabox.height)
+        twin_page.set_mediabox(page.mediabox)
+        twin_page.set_cropbox(page.cropbox)
+        spare, _ = twin_page.insert_htmlbox(rect, html, css=css, archive=archive, scale_low=1)
+    return spare
+
+
 def _stamp(
     page: pymupdf.Page,
     rect: pymupdf.Rect,
@@ -388,15 +407,74 @@ def _obstacles(page: pymupdf.Page, rect: pymupdf.Rect, edited: list[pymupdf.Rect
     return limit
 
 
-def _check_options(options: dict) -> tuple[float, bool, bool]:
+def _check_options(options: dict) -> tuple[float, bool, bool, bool]:
     shrink = options.get("shrink", "light")
     if shrink not in SHRINK_LIMITS:
         raise OldSchoolPDFError("Opção de redução inválida.")
+    overflow = options.get("overflow", "none")
+    if overflow not in {"none", "new_page"}:
+        raise OldSchoolPDFError("Opção de continuação inválida.")
     return (
         SHRINK_LIMITS[shrink],
         bool(options.get("expand", False)),
         bool(options.get("system_fonts", True)),
+        overflow == "new_page",
     )
+
+
+def _split_runs(runs: list[TextRun], cut: int) -> tuple[list[TextRun], list[TextRun]]:
+    """Divide os trechos na posição `cut` do texto inteiro."""
+    head, tail, position = [], [], 0
+    for run in runs:
+        end = position + len(run.text)
+        if end <= cut:
+            head.append(run)
+        elif position >= cut:
+            tail.append(run)
+        else:
+            head.append(replace(run, text=run.text[: cut - position]))
+            tail.append(replace(run, text=run.text[cut - position :]))
+        position = end
+    head = [run for run in head if run.text]
+    tail = [run for run in tail if run.text]
+    if head:
+        head[-1] = replace(head[-1], text=head[-1].text.rstrip())
+    while tail and not tail[0].text.strip():
+        tail.pop(0)
+    if tail:
+        tail[0] = replace(tail[0], text=tail[0].text.lstrip())
+    return [run for run in head if run.text], tail
+
+
+def _fit_prefix(
+    page: pymupdf.Page,
+    rect: pymupdf.Rect,
+    runs: list[TextRun],
+    styles: tuple[TextStyle, ...],
+    fonts: dict,
+    css: str,
+    archive: pymupdf.Archive,
+) -> int:
+    """Maior posição de quebra (fim de palavra) cujo começo cabe inteiro no retângulo."""
+    text = "".join(run.text for run in runs)
+    cuts = [match.start() for match in re.finditer(r"\s+", text)] + [len(text)]
+    low, high, best = 0, len(cuts) - 1, 0
+    while low <= high:
+        middle = (low + high) // 2
+        head, _ = _split_runs(runs, cuts[middle])
+        if head and _measure(page, rect, _html(head, styles, fonts), css, archive) >= 0:
+            best, low = cuts[middle], middle + 1
+        else:
+            high = middle - 1
+    return best
+
+
+def _margins(page: pymupdf.Page) -> tuple[float, float]:
+    """Topo e base ocupados pelo texto da página, para a página de continuação."""
+    blocks = [pymupdf.Rect(b[:4]) for b in page.get_text("blocks", flags=TEXT_FLAGS)]
+    top = min((b.y0 for b in blocks), default=72.0)
+    bottom = max((b.y1 for b in blocks), default=page.rect.y1 - 72.0)
+    return max(36.0, min(top, 108.0)), max(36.0, min(page.rect.y1 - bottom, 108.0))
 
 
 def _parse_runs(raw_runs, styles: tuple[TextStyle, ...]) -> list[TextRun]:
@@ -432,10 +510,13 @@ def replace_blocks(doc: pymupdf.Document, number: int, edits: list, options: dic
     original_rotation = page.rotation
     # Com a página a 0°, extração, remoção e escrita usam o mesmo sistema de coordenadas.
     page.set_rotation(0)
+    added: list[int] = []
     try:
-        return _replace(page, edits, options)
+        return _replace(page, edits, options, added)
     finally:
-        page.set_rotation(original_rotation)
+        # Páginas novas invalidam o objeto `page`: a página é carregada de novo.
+        for index in (number, *added):
+            doc[index].set_rotation(original_rotation)
 
 
 def _annotations(page: pymupdf.Page) -> list[tuple[int, int]]:
@@ -458,8 +539,10 @@ def _reattach(page: pymupdf.Page, xrefs: list[int]) -> None:
         doc.xref_set_key(page.xref, "Annots", "[" + references + "]")
 
 
-def _replace(page: pymupdf.Page, edits: list, options: dict) -> dict:
-    scale_low, expand, use_system = _check_options(options)
+def _replace(page: pymupdf.Page, edits: list, options: dict, added: list[int]) -> dict:
+    scale_low, expand, use_system, overflow = _check_options(options)
+    doc = page.parent
+    pending: list[tuple[pymupdf.Rect, str, str, str]] = []
     blocks, spans_by_key = _scan(page)
     by_key = {block.key: block for block in blocks}
     targets: list[tuple[TextBlock, list[TextRun]]] = []
@@ -562,8 +645,39 @@ def _replace(page: pymupdf.Page, edits: list, options: dict) -> dict:
         )
         html = _html(runs, block.styles, fonts)
         rect = pymupdf.Rect(block.bbox)
-        spare, scale = _stamp(page, rect, html, css, archive, scale_low)
-        if spare < 0 and expand:
+        spare = _measure(page, rect, html, css, archive) if overflow else -1.0
+        if overflow and spare < 0:
+            # Preenche o espaço livre abaixo do bloco e continua em páginas novas.
+            limit = _obstacles(page, rect, target_rects)
+            if limit > rect.y1 + 1:
+                rect = pymupdf.Rect(rect.x0, rect.y0, rect.x1, limit)
+                expanded += 1
+            cut = _fit_prefix(page, rect, runs, block.styles, fonts, css, archive)
+            runs, rest = _split_runs(runs, cut)
+            text = "".join(run.text for run in runs)
+            top, bottom = _margins(page)
+            # As páginas novas têm a geometria desta; a medida usa uma página gêmea.
+            area = pymupdf.Rect(rect.x0, top, rect.x1, page.rect.y1 - bottom)
+            while rest:
+                if len(pending) >= MAX_CONTINUATION_PAGES:
+                    raise OldSchoolPDFError(
+                        "O texto precisaria de páginas novas demais. Divida-o em partes menores."
+                    )
+                piece = _fit_prefix(page, area, rest, block.styles, fonts, css, archive)
+                if not piece:
+                    raise OldSchoolPDFError(
+                        "Uma palavra do texto não cabe na largura do bloco. Nada foi alterado."
+                    )
+                head, rest = _split_runs(rest, piece)
+                html_piece = _html(head, block.styles, fonts)
+                pending.append((area, html_piece, css, "".join(run.text for run in head)))
+            if not runs:
+                continue
+            html = _html(runs, block.styles, fonts)
+            spare, scale = _stamp(page, rect, html, css, archive, 1)
+        else:
+            spare, scale = _stamp(page, rect, html, css, archive, scale_low)
+        if spare < 0 and expand and not overflow:
             limit = _obstacles(page, rect, target_rects)
             if limit > rect.y1 + 1:
                 rect = pymupdf.Rect(rect.x0, rect.y0, rect.x1, limit)
@@ -604,10 +718,34 @@ def _replace(page: pymupdf.Page, edits: list, options: dict) -> dict:
         raise OldSchoolPDFError(
             "A verificação visual encontrou mudanças fora da área editada. Nada foi alterado."
         )
+    # 5. Páginas de continuação. Criar páginas invalida os objetos Page carregados,
+    #    por isso elas só nascem depois de conferida a página editada.
+    number = page.number
+    mediabox, cropbox = page.mediabox, page.cropbox
+    for area, html, css, text in pending:
+        index = number + 1 + len(added)
+        new = doc.new_page(
+            pno=index if index < doc.page_count else -1,
+            width=mediabox.width,
+            height=mediabox.height,
+        )
+        new.set_mediabox(mediabox)
+        new.set_cropbox(cropbox)
+        added.append(index)
+        spare, _ = _stamp(new, area, html, css, archive, 1)
+        other = doc[index]
+        if spare < 0 or compare_form(_written_text(other, area)) != compare_form(text):
+            raise OldSchoolPDFError(
+                "O texto da página de continuação não conferiu com o digitado. Nada foi alterado."
+            )
+        measured = _sample(other, area)
+        if measured is None or _distance(measured[0], measured[1]) < VISIBLE_INK / 2:
+            raise OldSchoolPDFError("O texto da continuação ficaria invisível. Nada foi alterado.")
     return {
         "blocks": len(targets),
         "fonts": [{"label": label, "exact": exact} for label, exact in report_fonts.items()],
         "scale": round(smallest, 3),
         "expanded": expanded,
         "links_restored": len(detached),
+        "pages_added": len(added),
     }

@@ -40,6 +40,7 @@ from oldschoolpdf.domain.editing import ANNOTATION_LABELS
 from oldschoolpdf.domain.tasks import TaskState
 from oldschoolpdf.ui.continuous import frame_pixmap
 from oldschoolpdf.ui.icons import command_icon
+from oldschoolpdf.ui.outline_dialog import outline_tree_rows
 from oldschoolpdf.ui.pdf_tab import PdfTab
 
 PAGE_MIME = "application/x-oldschoolpdf-page"
@@ -149,7 +150,7 @@ class ThumbnailView(QListView):
 
 
 class NavigationDock(QDockWidget):
-    def __init__(self, parent: QWidget) -> None:
+    def __init__(self, outline_action: QAction, parent: QWidget) -> None:
         super().__init__(self.tr("Páginas e índice"), parent)
         self.setObjectName("navigation_dock")
         self.setMinimumWidth(180)
@@ -183,13 +184,7 @@ class NavigationDock(QDockWidget):
         self.thumbnails.selectionModel().currentChanged.connect(self._go_to)
         self.stack.addWidget(self.thumbnails)
         tabs.addTab(self.stack, self.tr("Páginas"))
-        tabs.addTab(
-            empty_panel(
-                self.tr("Índice do documento"),
-                self.tr("A leitura de marcadores do PDF está prevista para uma etapa posterior."),
-            ),
-            self.tr("Índice"),
-        )
+        tabs.addTab(self._outline_panel(outline_action), self.tr("Índice"))
         self.setWidget(tabs)
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)
@@ -200,7 +195,87 @@ class NavigationDock(QDockWidget):
         tabs.currentChanged.connect(self._schedule)
         self.visibilityChanged.connect(self._schedule)
 
+    def _outline_panel(self, action: QAction) -> QWidget:
+        panel = QWidget()
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(2, 2, 2, 2)
+        self.outline_state = QLabel()
+        self.outline_state.setWordWrap(True)
+        self.outline_state.setProperty("role", "muted")
+        layout.addWidget(self.outline_state)
+        self.outline_tree = QTreeWidget()
+        self.outline_tree.setObjectName("pdf_outline_tree")
+        self.outline_tree.setAccessibleName(self.tr("Marcadores do documento"))
+        self.outline_tree.setHeaderHidden(True)
+        self.outline_tree.setUniformRowHeights(True)
+        self.outline_tree.itemClicked.connect(self._outline_clicked)
+        self.outline_tree.itemActivated.connect(self._outline_clicked)
+        layout.addWidget(self.outline_tree, 1)
+        edit = QToolButton()
+        edit.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        edit.setDefaultAction(action)
+        layout.addWidget(edit)
+        self._outline_key = None
+        return panel
+
+    def _show_outline(self, document: PdfTab | None) -> None:
+        viewer = document.viewer if document else None
+        key = (
+            (
+                id(document),
+                viewer.revision,
+                viewer.outline_loaded,
+                viewer.outline,
+                viewer.outline_error,
+            )
+            if viewer and viewer.info
+            else None
+        )
+        if key == self._outline_key:
+            return
+        self._outline_key = key
+        self.outline_tree.clear()
+        if key is None:
+            self.outline_state.setText(self.tr("Abra um PDF para ver o índice."))
+            return
+        if viewer.outline_error:
+            self.outline_state.setText(viewer.outline_error)
+            return
+        if not viewer.outline_loaded:
+            self.outline_state.setText(self.tr("Lendo os marcadores…"))
+            return
+        if not viewer.outline:
+            self.outline_state.setText(
+                self.tr("Este PDF não tem marcadores. Crie um sumário em Marcadores.")
+            )
+            return
+        self.outline_state.setText(
+            self.tr("%1 marcador(es). Clique para ir à página.").replace(
+                "%1", str(len(viewer.outline))
+            )
+        )
+        items: list[QTreeWidgetItem] = []
+        for index, parent in outline_tree_rows(viewer.outline):
+            entry = viewer.outline[index]
+            owner = items[parent] if parent >= 0 else self.outline_tree
+            item = QTreeWidgetItem(owner, [entry.title])
+            item.setData(0, Qt.ItemDataRole.UserRole, entry.page)
+            if entry.external:
+                item.setToolTip(0, self.tr("Link externo"))
+            elif entry.page < 0:
+                item.setToolTip(0, self.tr("Sem página de destino"))
+            else:
+                item.setToolTip(0, self.tr("Página %1").replace("%1", str(entry.page + 1)))
+            items.append(item)
+        self.outline_tree.expandToDepth(0)
+
+    def _outline_clicked(self, item: QTreeWidgetItem, _column: int = 0) -> None:
+        page = item.data(0, Qt.ItemDataRole.UserRole)
+        if self.document and isinstance(page, int) and page >= 0 and self.document.viewer.info:
+            self.document.viewer.go_to(min(page, self.document.viewer.info.page_count - 1))
+
     def show_document(self, document: PdfTab | None) -> None:
+        self._show_outline(document)
         viewer = document.viewer if document else None
         info = viewer.info if viewer else None
         count = info.page_count if info else 0
@@ -309,7 +384,11 @@ class EditorPane(QWidget):
         self.objects.currentIndexChanged.connect(self._select)
         root.addWidget(self.objects)
         add_tools(self.tr("Objeto selecionado"), ("move_object", "change_object", "remove_object"))
-        add_tools(self.tr("Formulários"), ("forms",))
+        add_tools(self.tr("Formulários"), ("forms", "add_field", "remove_field"))
+        add_tools(
+            self.tr("Páginas e sumário"),
+            ("insert_blank", "crop_pages", "resize_pages", "outline"),
+        )
         root.addStretch()
 
     def _select(self, _index: int) -> None:
@@ -378,6 +457,7 @@ class PropertiesDock(QDockWidget):
         processing_layout = QVBoxLayout(processing)
         processing_layout.addWidget(QLabel(self.tr("Processamento local")))
         for key in (
+            "to_word",
             "ocr",
             "ocr_setup",
             "images",
