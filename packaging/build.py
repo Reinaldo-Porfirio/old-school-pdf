@@ -123,6 +123,14 @@ def test_frozen_worker() -> None:
             resized, _ = ask("edit", action="resize_pages", page=0,
                              values={"ranges": [[0, 1]], "size": "letter"},
                              scratch=str(work), confirmed=False)  # fmt: skip
+            # Numeração (TextWriter), marca d'água (SVG em contorno) e localizar (0.10).
+            numbered, _ = ask("edit", action="header_footer", page=0,
+                              values={"ranges": [[0, 1]], "slots": {"footer_center": "[página]"}},
+                              scratch=str(work), confirmed=False)  # fmt: skip
+            marked, _ = ask("edit", action="watermark", page=0,
+                            values={"ranges": [[0, 1]], "mode": "text", "text": "CÓPIA"},
+                            scratch=str(work), confirmed=False)  # fmt: skip
+            matches, _ = ask("find_text", values={"query": "empacotado", "ranges": [[0, 1]]})
             # Conversão para Word: python-docx e o modelo de documento empacotados.
             word = Path(scratch) / "word"
             word.mkdir()
@@ -143,6 +151,9 @@ def test_frozen_worker() -> None:
                 outline,
                 blank,
                 resized,
+                numbered,
+                marked,
+                matches,
                 converted,
             )
             if "error" in reply
@@ -151,9 +162,12 @@ def test_frozen_worker() -> None:
             raise SystemExit(f"O leitor empacotado falhou: {problems or 'imagem vazia'}")
         if blank["result"]["page_count"] != 2 or not (word / "documento.docx").stat().st_size:
             raise SystemExit("O leitor empacotado não inseriu a página ou não gerou o .docx.")
+        if marked["result"]["report"]["pages"] != 2 or not matches["result"]["items"]:
+            raise SystemExit("O leitor empacotado não aplicou a marca d'água ou não localizou.")
     print(
         "Leitor empacotado abriu, renderizou, pesquisou, verificou assinaturas, editou texto, "
-        "leu marcadores, inseriu e redimensionou páginas e converteu para Word."
+        "leu marcadores, inseriu e redimensionou páginas, numerou, aplicou marca d'água, "
+        "localizou texto e converteu para Word."
     )
     bundled = {path.name.split("-")[0].lower() for path in APP_DIR.glob("_internal/*.dist-info")}
     if missing := {"pymupdf", "pyhanko", "python_docx"} - bundled:

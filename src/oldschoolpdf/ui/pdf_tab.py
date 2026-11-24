@@ -1,9 +1,11 @@
 """Controles e tela de uma aba PDF. Recebe imagens e texto do serviço local."""
 
 from PySide6.QtCore import QEvent, QPointF, QRectF, QSignalBlocker, Qt, QTimer, Signal
-from PySide6.QtGui import QBrush, QColor, QPen, QPixmap, QTransform
+from PySide6.QtGui import QBrush, QColor, QIcon, QPainterPath, QPen, QPixmap, QTransform
 from PySide6.QtWidgets import (
     QApplication,
+    QComboBox,
+    QGraphicsPathItem,
     QGraphicsPixmapItem,
     QGraphicsRectItem,
     QGraphicsScene,
@@ -20,6 +22,13 @@ from PySide6.QtWidgets import (
 )
 
 from oldschoolpdf.application.pdf_viewer import PageFrame, PdfViewer
+from oldschoolpdf.domain.editing import (
+    MAX_STROKE_POINTS,
+    PEN_COLORS,
+    PEN_WIDTHS,
+    STROKE_KINDS,
+    STYLED_KINDS,
+)
 from oldschoolpdf.domain.security import RedactionArea
 from oldschoolpdf.domain.viewer import (
     MAX_QUERY_LENGTH,
@@ -32,6 +41,9 @@ from oldschoolpdf.ui.continuous import ContinuousView, frame_pixmap
 
 ZOOM_LEVELS = (0.1, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0)
 PAGE_MARGIN = 12
+# Distância mínima, em pixels da tela, entre dois pontos gravados de um traço.
+STROKE_STEP = 2.0
+DEFAULT_PEN = {"color": "blue", "width": "medium"}
 
 
 def _button(text: str, label: str, callback) -> QPushButton:
@@ -47,6 +59,8 @@ class PdfCanvas(QGraphicsView):
     zoom_step = Signal(int)
     region_chosen = Signal(object)
     point_chosen = Signal(object)
+    stroke_chosen = Signal(object)
+    finish_requested = Signal()
     escape_pressed = Signal()
 
     def __init__(self) -> None:
@@ -76,6 +90,15 @@ class PdfCanvas(QGraphicsView):
         self._start: QPointF | None = None
         self._selection: PdfRect | None = None
         self.selecting = True
+        # Traços da caneta, da linha e da seta, em coordenadas relativas da tela.
+        self.stroke_mode = ""
+        self._stroke: list[QPointF] | None = None
+        self._strokes: list[list[QPointF]] = []
+        self.stroke_item = QGraphicsPathItem()
+        self.stroke_item.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+        self.stroke_item.setZValue(5)
+        self.scene().addItem(self.stroke_item)
+        self.set_stroke_style(QColor.fromRgbF(*PEN_COLORS["blue"][1]), 2.0)
 
     def _overlay(self, fill: QColor, border: QColor) -> QGraphicsRectItem:
         pen = QPen(border)
@@ -100,6 +123,61 @@ class PdfCanvas(QGraphicsView):
         if not enabled:
             self.clear_selection()
 
+    def set_stroke_style(self, color: QColor, width: float) -> None:
+        pen = QPen(color, max(1.0, width * 1.4))
+        pen.setCosmetic(True)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        self.stroke_item.setPen(pen)
+
+    def set_stroke_mode(self, mode: str) -> None:
+        """ "ink" guarda vários traços até gravar; "line" emite cada arraste; "" desliga."""
+        self.stroke_mode = mode
+        self._stroke = None
+        self._strokes = []
+        self._draw_strokes()
+        if mode:
+            self.clear_selection()
+            self.setDragMode(QGraphicsView.DragMode.NoDrag)
+            self.viewport().setCursor(Qt.CursorShape.CrossCursor)
+
+    def take_strokes(self) -> list[list[tuple[float, float]]]:
+        strokes = [[self._unrotated(point) for point in stroke] for stroke in self._strokes]
+        self._strokes = []
+        self._draw_strokes()
+        return strokes
+
+    def drop_last_stroke(self) -> None:
+        if self._strokes:
+            self._strokes.pop()
+            self._draw_strokes()
+
+    @property
+    def stroke_count(self) -> int:
+        return len(self._strokes)
+
+    def _unrotated(self, point: QPointF) -> tuple[float, float]:
+        x, y, _, _ = rotate_rect((point.x(), point.y(), point.x(), point.y()), -self.rotation)
+        return round(x, 5), round(y, 5)
+
+    def _scene_point(self, point: QPointF) -> QPointF:
+        return QPointF(point.x() * self.bounds.width(), point.y() * self.bounds.height())
+
+    def _draw_strokes(self) -> None:
+        path = QPainterPath()
+        current = [self._stroke] if self._stroke else []
+        for stroke in [*self._strokes, *current]:
+            first = self._scene_point(stroke[0])
+            path.moveTo(first)
+            for point in stroke[1:]:
+                path.lineTo(self._scene_point(point))
+            if len(stroke) == 1:
+                path.lineTo(first + QPointF(0.5, 0.5))
+        self.stroke_item.setPath(path)
+
+    def _stroke_points(self) -> int:
+        return sum(len(stroke) for stroke in self._strokes) + len(self._stroke or ())
+
     def release_raster(self) -> None:
         self.page_item.setPixmap(QPixmap())
 
@@ -107,6 +185,9 @@ class PdfCanvas(QGraphicsView):
         self.page = -1
         self.release_raster()
         self.clear_selection()
+        self._stroke = None
+        self._strokes = []
+        self._draw_strokes()
         self.show_object(None)
         self.set_matches((), ())
         self.show_redactions(())
@@ -143,6 +224,7 @@ class PdfCanvas(QGraphicsView):
         if self._selection:
             self.selection_item.setRect(self._absolute(self._selection))
         self.show_object(self._object_region)
+        self._draw_strokes()
 
     def show_object(self, region: PdfRect | None) -> None:
         self._object_region = region
@@ -220,6 +302,14 @@ class PdfCanvas(QGraphicsView):
         self.selection_item.show()
 
     def mousePressEvent(self, event) -> None:
+        if self.stroke_mode and self.has_page and event.button() == Qt.MouseButton.LeftButton:
+            self.setFocus()
+            position = self.mapToScene(event.position().toPoint())
+            if self.bounds.contains(position) and self._stroke_points() < MAX_STROKE_POINTS - 2:
+                self._stroke = [self._relative(position)]
+                self._draw_strokes()
+            event.accept()
+            return
         if self.selecting and self.has_page and event.button() == Qt.MouseButton.LeftButton:
             self.setFocus()
             self.clear_selection()
@@ -231,6 +321,21 @@ class PdfCanvas(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event) -> None:
+        if self._stroke is not None:
+            point = self._relative(self.mapToScene(event.position().toPoint()))
+            if self.stroke_mode == "line":
+                self._stroke = [self._stroke[0], point]
+            else:
+                last = self._scene_point(self._stroke[-1])
+                step = self._scene_point(point) - last
+                moved = abs(step.x()) + abs(step.y())
+                # A escala da cena acompanha o zoom; o passo é medido na tela.
+                scale = max(self.transform().m11(), 1e-6)
+                if moved * scale >= STROKE_STEP and self._stroke_points() < MAX_STROKE_POINTS - 1:
+                    self._stroke.append(point)
+            self._draw_strokes()
+            event.accept()
+            return
         if self._start is not None:
             self._drag(event.position())
             event.accept()
@@ -238,6 +343,21 @@ class PdfCanvas(QGraphicsView):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event) -> None:
+        if self._stroke is not None:
+            stroke, self._stroke = self._stroke, None
+            if self.stroke_mode == "line":
+                if len(stroke) == 2:
+                    step = self._scene_point(stroke[1]) - self._scene_point(stroke[0])
+                    if abs(step.x()) + abs(step.y()) >= 6:
+                        self.stroke_chosen.emit([[self._unrotated(p) for p in stroke]])
+            else:
+                if len(stroke) == 1:
+                    # Um clique vira um ponto: dois pontos quase iguais.
+                    stroke.append(QPointF(min(1.0, stroke[0].x() + 0.001), stroke[0].y()))
+                self._strokes.append(stroke)
+            self._draw_strokes()
+            event.accept()
+            return
         if self._start is not None:
             point = self._start
             self._drag(event.position())
@@ -259,6 +379,9 @@ class PdfCanvas(QGraphicsView):
         if event.key() == Qt.Key.Key_Escape:
             self.clear_selection()
             self.escape_pressed.emit()
+            event.accept()
+        elif self.stroke_mode == "ink" and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self.finish_requested.emit()
             event.accept()
         else:
             super().keyPressEvent(event)
@@ -287,10 +410,12 @@ class PdfTab(QWidget):
     feedback = Signal(str)
     placement_ready = Signal(str, object)
 
-    def __init__(self, viewer: PdfViewer) -> None:
+    def __init__(self, viewer: PdfViewer, pen: dict | None = None) -> None:
         super().__init__()
         self.setObjectName("pdf_tab")
         self.viewer = viewer
+        # Cor e espessura da barra de desenho; a janela compartilha o mesmo dicionário.
+        self.pen = pen if pen is not None else dict(DEFAULT_PEN)
         self.fit: FitMode | None = "page"
         self.actual_zoom: float | None = None
         self.page_properties: tuple[float, float, int] | None = None
@@ -314,6 +439,8 @@ class PdfTab(QWidget):
         self.placement_note.setContentsMargins(8, 4, 8, 4)
         self.placement_note.hide()
         layout.addWidget(self.placement_note)
+        self.drawing_bar = self._drawing_bar()
+        layout.addWidget(self.drawing_bar)
         self.redaction_note = QLabel()
         self.redaction_note.setObjectName("redaction_preview")
         self.redaction_note.setProperty("role", "badge")
@@ -340,6 +467,8 @@ class PdfTab(QWidget):
         self.canvas.zoom_step.connect(self.step_zoom)
         self.canvas.region_chosen.connect(self._chosen_region)
         self.canvas.point_chosen.connect(self._chosen_point)
+        self.canvas.stroke_chosen.connect(self._chosen_strokes)
+        self.canvas.finish_requested.connect(self.finish_drawing)
         self.canvas.escape_pressed.connect(self._cancel_placement)
         viewer.changed.connect(self._sync)
         viewer.edited.connect(self._revision_edited)
@@ -367,15 +496,95 @@ class PdfTab(QWidget):
         self.canvas.show_object(obj.region if obj else None)
         self.updated.emit()
 
+    def _drawing_bar(self) -> QWidget:
+        widget = QWidget()
+        widget.setObjectName("drawing_bar")
+        row = QHBoxLayout(widget)
+        row.setContentsMargins(8, 2, 8, 4)
+        row.addWidget(QLabel(self.tr("Cor:")))
+        self.pen_color = QComboBox()
+        self.pen_color.setObjectName("pen_color")
+        self.pen_color.setAccessibleName(self.tr("Cor do desenho"))
+        for key, (label, rgb) in PEN_COLORS.items():
+            swatch = QPixmap(14, 14)
+            swatch.fill(QColor.fromRgbF(*rgb))
+            self.pen_color.addItem(QIcon(swatch), label, key)
+        row.addWidget(self.pen_color)
+        row.addWidget(QLabel(self.tr("Espessura:")))
+        self.pen_width = QComboBox()
+        self.pen_width.setObjectName("pen_width")
+        self.pen_width.setAccessibleName(self.tr("Espessura do traço"))
+        for key, (label, _width) in PEN_WIDTHS.items():
+            self.pen_width.addItem(label, key)
+        row.addWidget(self.pen_width)
+        self.pen_color.currentIndexChanged.connect(self._pen_changed)
+        self.pen_width.currentIndexChanged.connect(self._pen_changed)
+        row.addStretch()
+        self.undo_stroke = _button(
+            self.tr("Apagar último traço"),
+            self.tr("Apaga o último traço ainda não gravado"),
+            self.canvas_drop_stroke,
+        )
+        self.finish_button = _button(
+            self.tr("Gravar desenho"),
+            self.tr("Grava os traços na página (Enter)"),
+            self.finish_drawing,
+        )
+        cancel = _button(
+            self.tr("Cancelar"), self.tr("Cancela o desenho (Esc)"), self._cancel_placement
+        )
+        for button in (self.undo_stroke, self.finish_button, cancel):
+            row.addWidget(button)
+        widget.hide()
+        return widget
+
+    def canvas_drop_stroke(self) -> None:
+        self.canvas.drop_last_stroke()
+
+    def _sync_pen(self) -> None:
+        with QSignalBlocker(self.pen_color), QSignalBlocker(self.pen_width):
+            self.pen_color.setCurrentIndex(max(0, self.pen_color.findData(self.pen["color"])))
+            self.pen_width.setCurrentIndex(max(0, self.pen_width.findData(self.pen["width"])))
+        self._apply_pen()
+
+    def _pen_changed(self, _index: int = 0) -> None:
+        self.pen["color"] = self.pen_color.currentData()
+        self.pen["width"] = self.pen_width.currentData()
+        self._apply_pen()
+        self.canvas.setFocus()
+
+    def _apply_pen(self) -> None:
+        color = QColor.fromRgbF(*PEN_COLORS[self.pen["color"]][1])
+        if self.pen["color"] == "yellow":
+            color.setAlphaF(0.6)
+        self.canvas.set_stroke_style(color, PEN_WIDTHS[self.pen["width"]][1])
+
     def prepare_placement(self, kind: str) -> None:
         self.set_continuous(False)
         self.set_selection_enabled(True)
         region = self.canvas.selected_region()
+        self._cancel_placement()
         self.placement = kind
-        if region and kind != "move":
+        if region and kind not in STROKE_KINDS and kind != "move":
             self._chosen_region(region)
             return
-        if kind == "move":
+        self.drawing_bar.setVisible(kind in STYLED_KINDS)
+        self.finish_button.setVisible(kind == "ink")
+        self.undo_stroke.setVisible(kind == "ink")
+        if kind in STYLED_KINDS:
+            self._sync_pen()
+        if kind in STROKE_KINDS:
+            self.canvas.set_stroke_mode("ink" if kind == "ink" else "line")
+        if kind == "ink":
+            message = self.tr(
+                "Desenhe com o mouse; pode fazer vários traços. Enter ou “Gravar desenho” "
+                "grava. Esc cancela."
+            )
+        elif kind == "line":
+            message = self.tr("Arraste do começo ao fim da linha. Esc cancela.")
+        elif kind == "arrow":
+            message = self.tr("Arraste do começo até a ponta da seta. Esc cancela.")
+        elif kind == "move":
             message = self.tr("Clique no novo canto superior esquerdo do objeto. Esc cancela.")
         elif kind == "comment":
             message = self.tr("Clique onde deseja inserir o comentário. Esc cancela.")
@@ -392,8 +601,31 @@ class PdfTab(QWidget):
         self.placement_note.show()
 
     def _cancel_placement(self) -> None:
+        if self.placement and not self.placement_note.isHidden():
+            # A dica da ferramenta sai da barra de status junto com a ferramenta.
+            self.feedback.emit("")
         self.placement = ""
         self.placement_note.hide()
+        self.drawing_bar.hide()
+        if self.canvas.stroke_mode:
+            self.canvas.set_stroke_mode("")
+            self.canvas.set_selection_mode(self.canvas.selecting)
+
+    def _chosen_strokes(self, strokes) -> None:
+        if self.placement in {"line", "arrow"} and strokes:
+            kind = self.placement
+            self._cancel_placement()
+            self.placement_ready.emit(kind, {"points": strokes[0]})
+
+    def finish_drawing(self) -> None:
+        if self.placement != "ink":
+            return
+        strokes = self.canvas.take_strokes()
+        if not strokes:
+            self.feedback.emit(self.tr("Desenhe pelo menos um traço antes de gravar."))
+            return
+        self._cancel_placement()
+        self.placement_ready.emit("ink", {"strokes": strokes})
 
     def _chosen_region(self, region) -> None:
         if self.placement:

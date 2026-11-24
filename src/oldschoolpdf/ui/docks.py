@@ -360,19 +360,14 @@ class EditorPane(QWidget):
                 button.setDefaultAction(actions[key])
                 root.addWidget(button)
 
-        add_tools(self.tr("Texto original"), ("edit_text",))
+        add_tools(self.tr("Texto original"), ("edit_text", "find_replace"))
         add_tools(
-            self.tr("Adicionar à página"),
-            (
-                "highlight",
-                "underline",
-                "comment",
-                "text",
-                "stamp",
-                "rectangle",
-                "ellipse",
-                "insert_image",
-            ),
+            self.tr("Marcar o texto"),
+            ("highlight", "underline", "strikeout", "comment", "text"),
+        )
+        add_tools(
+            self.tr("Desenhar e inserir"),
+            ("ink", "line", "arrow", "rectangle", "ellipse", "stamp", "insert_image"),
         )
         self.objects = QComboBox()
         self.objects.setObjectName("pdf_annotation_selector")
@@ -385,6 +380,10 @@ class EditorPane(QWidget):
         root.addWidget(self.objects)
         add_tools(self.tr("Objeto selecionado"), ("move_object", "change_object", "remove_object"))
         add_tools(self.tr("Formulários"), ("forms", "add_field", "remove_field"))
+        add_tools(
+            self.tr("Numeração e marca d'água"),
+            ("header_footer", "watermark", "remove_stamps"),
+        )
         add_tools(
             self.tr("Páginas e sumário"),
             ("insert_blank", "crop_pages", "resize_pages", "outline"),

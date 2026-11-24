@@ -18,6 +18,7 @@ from oldschoolpdf.domain.editing import (
     TEXT_EDITS,
 )
 from oldschoolpdf.domain.errors import OldSchoolPDFError
+from oldschoolpdf.domain.stamps import STAMP_EDITS
 from oldschoolpdf.domain.viewer import MAX_QUERY_LENGTH, MAX_RASTER_BYTES, MAX_SEARCH_HITS, PdfRect
 from oldschoolpdf.infrastructure.local_files import FileStamp, file_stamp
 from oldschoolpdf.infrastructure.pdf_editing import (
@@ -33,6 +34,12 @@ from oldschoolpdf.infrastructure.pdf_editing import (
 from oldschoolpdf.infrastructure.pdf_forms import add_field, remove_field
 from oldschoolpdf.infrastructure.pdf_outline import read_outline, set_outline, suggest_outline
 from oldschoolpdf.infrastructure.pdf_pages import crop_pages, insert_blank, resize_pages
+from oldschoolpdf.infrastructure.pdf_replace import (
+    PageFailure,
+    ReplaceState,
+    find_text,
+    replace_matches,
+)
 from oldschoolpdf.infrastructure.pdf_security import (
     encrypt_copy,
     protected,
@@ -41,6 +48,7 @@ from oldschoolpdf.infrastructure.pdf_security import (
     strip_metadata,
 )
 from oldschoolpdf.infrastructure.pdf_signatures import sign_copy, signature_report
+from oldschoolpdf.infrastructure.pdf_stamps import header_footer, remove_stamps, watermark
 from oldschoolpdf.infrastructure.pdf_storage import (
     MAX_PAGES,
     PdfHistory,
@@ -56,6 +64,8 @@ from oldschoolpdf.infrastructure.pdf_text_edit import read_blocks, replace_block
 MAX_PAGE_POINTS = 25_000
 MAX_WORDS = 120_000
 MAX_COPY_LENGTH = 128_000
+# Cada página que falha na substituição em lote custa uma nova tentativa sem ela.
+MAX_REPLACE_ATTEMPTS = 12
 
 
 def _fold(text: str) -> str:
@@ -211,6 +221,12 @@ class PdfEngine:
         report["view"] = view
         return {"report": report, "frame": frame}, raster
 
+    def find_text(self, values: dict) -> dict:
+        """Ocorrências do texto nos blocos editáveis, para Localizar e substituir."""
+        self._page(0)
+        self._require_text_edit()
+        return find_text(self.document, values)
+
     def _require_text_edit(self) -> None:
         if not self._allowed(pymupdf.PDF_PERM_MODIFY):
             raise OldSchoolPDFError("As permissões do PDF não permitem alterar o conteúdo.")
@@ -290,7 +306,7 @@ class PdfEngine:
         permissions = []
         if action in PAGE_EDITS or action in OUTLINE_EDITS:
             permission = self._assembly_permission()
-        elif action in BOX_EDITS:
+        elif action in BOX_EDITS or action in STAMP_EDITS:
             permission = pymupdf.PDF_PERM_MODIFY
         elif action in ANNOTATION_EDITS:
             permission = pymupdf.PDF_PERM_ANNOTATE
@@ -316,6 +332,8 @@ class PdfEngine:
             raise OldSchoolPDFError("Operação de edição desconhecida.")
         if not all(self._allowed(item) for item in (permission, *permissions)):
             raise OldSchoolPDFError("As permissões do PDF restringem essa alteração.")
+        if action == "replace_matches":
+            return self._replace_matches(page, values, scratch)
         report = None
         with self.history.read(self.history.current, self._password) as working:
             if action == "insert_blank":
@@ -328,6 +346,13 @@ class PdfEngine:
                 page, report = resize_pages(working, values)
             elif action in OUTLINE_EDITS:
                 report = set_outline(working, values)
+            elif action == "header_footer":
+                # Marcas valem para muitas páginas: a tela continua na página atual.
+                _, report = header_footer(working, values)
+            elif action == "watermark":
+                _, report = watermark(working, values)
+            elif action == "remove_stamps":
+                _, report = remove_stamps(working, values)
             elif action == "add_field":
                 report = {"xref": add_field(working[page], values)}
             elif action == "remove_field":
@@ -345,6 +370,31 @@ class PdfEngine:
         if report is not None:
             result["report"] = report
         return result
+
+    def _replace_matches(self, page: int, values: dict, scratch: str) -> dict:
+        """Substitui em lote; trechos que não cabem ficam de fora e entram no relatório."""
+        state = ReplaceState()
+        for _attempt in range(MAX_REPLACE_ATTEMPTS):
+            with self.history.read(self.history.current, self._password) as working:
+                try:
+                    report = replace_matches(working, values, state)
+                except PageFailure as failure:
+                    state.learn(failure)
+                    continue
+                if not report["items"]:
+                    reasons = "; ".join(
+                        f"página {item['page']}: {item['reason']}" for item in report["failed"][:3]
+                    )
+                    raise OldSchoolPDFError("Nenhuma ocorrência pôde ser substituída. " + reasons)
+                verified = self.history.add(working, scratch, self._password, page)
+            self.document.close()
+            self.document = verified
+            result = self._revision_result()
+            result["report"] = report
+            return result
+        raise OldSchoolPDFError(
+            "Muitos trechos não puderam ser alterados. Substitua em menos páginas por vez."
+        )
 
     def step(self, direction: int) -> dict:
         verified = self.history.step(direction, self._password)

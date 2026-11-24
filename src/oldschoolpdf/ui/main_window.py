@@ -36,6 +36,7 @@ from oldschoolpdf.application.capability_service import CapabilitiesService
 from oldschoolpdf.application.contracts import JobService
 from oldschoolpdf.application.pdf_viewer import PdfWorkspace
 from oldschoolpdf.application.preferences import THEME_NAMES, Preferences
+from oldschoolpdf.domain.editing import TEXT_ANNOTATIONS
 from oldschoolpdf.domain.errors import SettingsError
 from oldschoolpdf.infrastructure.settings_repository import (
     LAYOUT_VERSION,
@@ -50,9 +51,10 @@ from oldschoolpdf.ui.icons import app_icon, command_icon
 from oldschoolpdf.ui.media_tools import MEDIA_ACTIONS, MediaTools
 from oldschoolpdf.ui.organize_tools import OrganizeTools
 from oldschoolpdf.ui.pages import CapabilitiesPage, GuidePage, HomePage
-from oldschoolpdf.ui.pdf_tab import ZOOM_LEVELS, PdfTab
+from oldschoolpdf.ui.pdf_tab import DEFAULT_PEN, ZOOM_LEVELS, PdfTab
 from oldschoolpdf.ui.print_tools import PrintTools
 from oldschoolpdf.ui.security_tools import SecurityTools
+from oldschoolpdf.ui.stamp_tools import StampTools
 from oldschoolpdf.ui.text_tools import TextTools
 from oldschoolpdf.ui.themes import apply_theme
 
@@ -76,11 +78,15 @@ PAGE_COMMANDS = ("split", "extract", "reorder", "rotate_pages", "delete_pages")
 ANNOTATION_COMMANDS = (
     ("highlight", "Destacar texto", "highlight", "highlight"),
     ("underline", "Sublinhar texto", "underline", "underline"),
+    ("strikeout", "Riscar texto", "strikeout", "strikeout"),
     ("comment", "Adicionar comentário", "comment", "comment"),
     ("text", "Inserir caixa de texto", "text", "text"),
     ("stamp", "Aplicar carimbo", "stamp", "stamp"),
     ("rectangle", "Inserir retângulo", "rectangle", "rectangle"),
     ("ellipse", "Inserir elipse", "ellipse", "ellipse"),
+    ("ink", "Caneta (desenho à mão)", "pen", "ink"),
+    ("line", "Inserir linha", "line", "line"),
+    ("arrow", "Inserir seta", "arrow", "arrow"),
     ("insert_image", "Inserir imagem", "image", "image"),
 )
 
@@ -106,6 +112,9 @@ class MainWindow(QMainWindow):
         self.print_tools = PrintTools(self)
         self.text_tools = TextTools(self)
         self.organize_tools = OrganizeTools(self)
+        self.stamp_tools = StampTools(self)
+        # Cor e espessura da caneta, compartilhadas entre as abas.
+        self.pen = dict(DEFAULT_PEN)
         self._active_pdf: PdfTab | None = None
         self.setAcceptDrops(True)
         self.preferences = settings.load_preferences()
@@ -319,6 +328,25 @@ class MainWindow(QMainWindow):
                 "remove",
                 self.organize_tools.remove_field,
             ),
+            (
+                "header_footer",
+                self.tr("&Numeração, cabeçalho e rodapé…"),
+                "header_footer",
+                self.stamp_tools.header_footer,
+            ),
+            ("watermark", self.tr("Marca d'á&gua…"), "watermark", self.stamp_tools.watermark),
+            (
+                "remove_stamps",
+                self.tr("Remover cabeçalho, rodapé e marca d'água…"),
+                "remove_stamps",
+                self.stamp_tools.remove_stamps,
+            ),
+            (
+                "find_replace",
+                self.tr("&Localizar e substituir…"),
+                "find_replace",
+                self.stamp_tools.find_replace,
+            ),
         ):
             action = self._action(
                 key, title, icon, lambda checked=False, handler=callback: self._with_pdf(handler)
@@ -460,12 +488,18 @@ class MainWindow(QMainWindow):
                 "merge",
                 "split",
                 "extract",
+                "header_footer",
+                "watermark",
                 "|",
                 "edit_text",
+                "find_replace",
                 "highlight",
                 "underline",
+                "strikeout",
                 "comment",
                 "text",
+                "ink",
+                "arrow",
                 "forms",
                 "|",
                 "ocr",
@@ -520,6 +554,7 @@ class MainWindow(QMainWindow):
                 "|",
                 "select",
                 "edit_text",
+                "find_replace",
             ),
         )
         annotations = edit.addMenu(self.tr("&Anotações"))
@@ -574,6 +609,10 @@ class MainWindow(QMainWindow):
                 "resize_pages",
                 "|",
                 "outline",
+                "|",
+                "header_footer",
+                "watermark",
+                "remove_stamps",
                 "|",
                 "stamp",
                 "forms",
@@ -726,7 +765,7 @@ class MainWindow(QMainWindow):
                 self.tabs.setCurrentWidget(existing)
                 opened.append(existing)
                 continue
-            tab = PdfTab(self.pdf_workspace.open(absolute))
+            tab = PdfTab(self.pdf_workspace.open(absolute), self.pen)
             tab.canvas.addAction(self.actions["copy"])
             tab.updated.connect(self._update_pdf_controls)
             tab.close_requested.connect(
@@ -750,6 +789,9 @@ class MainWindow(QMainWindow):
                 lambda action, report, widget=tab: self.organize_tools.report(
                     widget, action, report
                 )
+            )
+            tab.viewer.edit_reported.connect(
+                lambda action, report, widget=tab: self.stamp_tools.report(widget, action, report)
             )
             index = self.tabs.addTab(
                 tab, command_icon("document"), absolute.name.replace("&", "&&")
@@ -803,6 +845,7 @@ class MainWindow(QMainWindow):
         self.print_tools.update_controls(tab)
         self.text_tools.update_controls(tab)
         self.organize_tools.update_controls(tab)
+        self.stamp_tools.update_controls(tab)
         for key in (
             "find",
             "zoom_in",
@@ -824,7 +867,7 @@ class MainWindow(QMainWindow):
         )
         self.actions["move_object"].setEnabled(bool(obj and obj.movable))
         self.actions["change_object"].setEnabled(
-            bool(obj and obj.editable and obj.kind in {"comment", "text", "highlight", "underline"})
+            bool(obj and obj.editable and obj.kind in TEXT_ANNOTATIONS)
         )
         self.actions["remove_object"].setEnabled(bool(obj and obj.editable))
         self.actions["undo"].setEnabled(bool(ready and viewer.can_undo))
@@ -951,9 +994,9 @@ class MainWindow(QMainWindow):
             self.tr("Sobre o Old School PDF"),
             f"<h2>Old School PDF {__version__}</h2>"
             + self.tr(
-                "<p><b>M5 · Segurança e assinaturas locais</b></p>"
+                "<p><b>Editor de PDF grátis, local e sem assinatura</b></p>"
                 "<p>Leitura, edição, OCR local e operações de segurança com PyMuPDF.</p>"
-                "<p>Sem login, mensalidade, marca-d'água ou "
+                "<p>Sem login, mensalidade, marca d'água imposta nos seus arquivos ou "
                 "telemetria. Código sob AGPL-3.0-or-later.</p>"
                 "<p>Interface: PySide6 / Qt, opção LGPLv3. "
                 "Ícones originais do projeto. Consulte LICENSE e THIRD_PARTY_NOTICES.md.</p>"

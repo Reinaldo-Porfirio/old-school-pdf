@@ -56,8 +56,13 @@ mude a página de destino, reorganize com Subir e Descer e monte os níveis com 
 um sumário pronto para revisar. Marcadores que abrem links externos mantêm o destino.</p>
 <h2>Anotar e preencher</h2>
 <p>Abra o painel <b>Propriedades e ferramentas → Edição</b> ou o menu Editar → Anotações.
-Selecione o destaque, sublinhado, caixa de texto, carimbo, forma ou imagem e arraste sobre
-a página. Clique para posicionar um comentário. Esc cancela a ferramenta ativa.
+Selecione o destaque, sublinhado, texto riscado, caixa de texto, carimbo, forma ou imagem e
+arraste sobre a página. Clique para posicionar um comentário. Esc cancela a ferramenta ativa.</p>
+<p>Para desenhar, escolha <b>Caneta</b>, <b>Inserir linha</b> ou <b>Inserir seta</b>. Uma barra
+aparece sobre a página com a cor (azul, vermelho, preto, verde ou amarelo marca-texto) e a
+espessura; elas valem também para retângulos e elipses. Com a caneta, faça quantos traços quiser
+e pressione Enter ou <b>Gravar desenho</b>; <b>Apagar último traço</b> desfaz o traço anterior.
+Linhas e setas são desenhadas arrastando do começo ao fim.
 Selecione uma anotação na página ou no painel para mover, editar seu texto ou excluí-la,
 conforme o tipo. Para campos AcroForm compatíveis, use Preencher formulário na página do campo.</p>
 <p>Para criar um formulário, use <b>Documento → Criar campo de formulário</b> e arraste o
@@ -79,6 +84,32 @@ o bloco ocupa o espaço livre abaixo dele, sem reduzir a fonte, e o texto que so
 páginas novas logo depois da atual. Blocos tracejados não podem ser editados:
 texto invisível de OCR, texto girado, texto sobre campos de formulário ou páginas
 digitalizadas sem texto.</p>
+<h2>Localizar e substituir</h2>
+<p><b>Editar → Localizar e substituir</b> (Ctrl+H) procura uma palavra ou frase no texto do PDF,
+em todas as páginas ou só na atual, e lista cada ocorrência com o trecho ao redor. Desmarque
+o que não quiser trocar e clique em <b>Substituir marcadas</b>. A troca mantém a fonte do
+documento; se o texto novo for maior, o bloco usa o espaço livre ao lado e reduz a fonte até
+85%. O que não couber fica como estava e aparece num aviso, com a página e o motivo. Tudo é
+desfeito de uma vez com Ctrl+Z. Texto de OCR, texto girado e o cabeçalho aplicado pelo programa
+aparecem na lista, mas não são trocados.</p>
+<h2>Numeração, cabeçalho e rodapé</h2>
+<p><b>Documento → Numeração, cabeçalho e rodapé</b> numera as páginas (Página 1 de 10, 1/10,
+- 1 - e outros formatos) e escreve textos no topo e no pé, à esquerda, no centro ou à direita.
+Os botões <b>Número da página</b>, <b>Total de páginas</b>, <b>Data de hoje</b> e <b>Nome do
+arquivo</b> inserem campos que mudam em cada página. Para não numerar a capa, escolha as
+páginas 2 em diante e comece em 1. A prévia mostra o topo e o pé da primeira página em
+tamanho real. Se o texto novo encostar em algo que já existia, o programa avisa em quais
+páginas. Aplicar de novo substitui a numeração anterior, em vez de escrever por cima.</p>
+<h2>Marca d'água</h2>
+<p><b>Documento → Marca d'água</b> coloca um texto (CONFIDENCIAL, CÓPIA, RASCUNHO ou o que
+você escrever) ou uma imagem, como um logotipo, em todas as páginas escolhidas. Escolha a cor,
+a direção (diagonal, horizontal ou vertical), a opacidade e se ela fica atrás ou na frente do
+conteúdo. A marca de texto vira desenho: não aparece na busca, na cópia de texto nem na
+conversão para Word, e não atrapalha a edição do texto. Em páginas digitalizadas, uma imagem
+cobre a página inteira; escolha <b>Na frente do conteúdo</b> para a marca aparecer.</p>
+<p><b>Remover cabeçalho, rodapé e marca d'água</b> tira o que o Old School PDF aplicou, mesmo
+depois de salvar e reabrir o arquivo. Marcas feitas por outros programas fazem parte do
+conteúdo da página e não saem por aqui.</p>
 <h2>Imprimir</h2>
 <p><b>Arquivo → Imprimir</b> (Ctrl+P) abre o diálogo do Windows, com intervalo de páginas,
 página atual, cópias e ordem. Cada página é ajustada ao papel e girada quando a orientação
@@ -148,7 +179,8 @@ Um componente detectado ainda pode exigir validação e integração futura.</p>
 para cancelar ou use Cancelar lote em Ferramentas. Os resultados já publicados permanecem
 disponíveis. Cada aba mantém página, rotação, zoom e revisões enquanto estiver aberta.</p>
 <h2>Privacidade e licença</h2>
-<p>Sem login, mensalidade, marca-d'água, telemetria ou uploads. Nenhum conteúdo
+<p>Sem login, mensalidade, marca d'água imposta nos seus arquivos, telemetria ou uploads.
+Nenhum conteúdo
 ativo de PDF é executado. Não há atualizações automáticas de rede.
 Código sob AGPL-3.0-or-later, com avisos de terceiros preservados.</p>
 """
@@ -227,8 +259,9 @@ class HomePage(QScrollArea):
             ("M5", "Segurança e assinaturas locais", "Concluído"),
             ("M6", "Visual Clássico 2000, novo nome e instalador", "Concluído"),
             ("M7", "Impressão e edição do texto original", "Concluído"),
-            ("M8", "Páginas, marcadores, formulários e Word", "Versão atual"),
-            ("M9", "Mais temas e edição de texto em colunas", "Futuro"),
+            ("M8", "Páginas, marcadores, formulários e Word", "Concluído"),
+            ("M9", "Numeração, marca d'água, substituir e desenho", "Versão atual"),
+            ("M10", "Mais temas e edição de texto em colunas", "Futuro"),
         ):
             QTreeWidgetItem(roadmap, row)
         roadmap.header().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)

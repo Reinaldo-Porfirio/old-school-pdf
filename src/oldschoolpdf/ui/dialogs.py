@@ -46,6 +46,7 @@ ACTION_LABELS = {
     "redact": "Marcar área para redação",
     "print": "Imprimir",
     "edit_text": "Editar texto do PDF",
+    "find_replace": "Localizar e substituir",
 }
 
 

@@ -1,6 +1,5 @@
 """Páginas em branco, corte de margens e mudança do tamanho do papel."""
 
-import re
 from collections import Counter
 
 import pymupdf as pdf
@@ -14,14 +13,11 @@ from oldschoolpdf.domain.editing import (
 )
 from oldschoolpdf.domain.errors import OldSchoolPDFError
 from oldschoolpdf.domain.text_editing import compare_form
-from oldschoolpdf.infrastructure.pdf_editing import indices
+from oldschoolpdf.infrastructure.pdf_editing import indices, pdf_array, transform_annotations
 
 # Resolução da varredura que procura o conteúdo visível no corte automático.
 AUTO_CROP_DPI = 48
 WHITE = 245
-# Chaves de anotações com pares de coordenadas na página.
-POINT_KEYS = ("QuadPoints", "Vertices", "L", "CL")
-NUMBER = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
 
 
 def insert_blank(doc: pdf.Document, page: int, values: dict) -> int:
@@ -138,55 +134,7 @@ def crop_pages(doc: pdf.Document, values: dict) -> tuple[int, dict]:
     return selected[0], {"pages": changed, "blank": blank}
 
 
-def _numbers(text: str) -> list[float]:
-    return [float(value) for value in NUMBER.findall(text)]
-
-
-def _format(values) -> str:
-    return "[" + " ".join(f"{value:.4f}".rstrip("0").rstrip(".") for value in values) + "]"
-
-
-def _transform_points(values: list[float], matrix: pdf.Matrix) -> list[float]:
-    result = []
-    for x, y in zip(values[::2], values[1::2], strict=True):
-        point = pdf.Point(x, y) * matrix
-        result += [point.x, point.y]
-    return result
-
-
-def _transform_annotations(doc: pdf.Document, page: pdf.Page, matrix: pdf.Matrix) -> None:
-    """Leva as anotações, links e campos para a nova posição do conteúdo."""
-    scale = abs(matrix.a) or abs(matrix.b)
-    for xref, _kind, _ in page.annot_xrefs():
-        kind, rect = doc.xref_get_key(xref, "Rect")
-        if kind != "array":
-            continue
-        corners = _numbers(rect)
-        if len(corners) != 4:
-            raise OldSchoolPDFError("Uma anotação da página tem uma posição inválida.")
-        moved = pdf.Rect(
-            pdf.Point(corners[0], corners[1]) * matrix, pdf.Point(corners[2], corners[3]) * matrix
-        )
-        moved.normalize()
-        doc.xref_set_key(xref, "Rect", _format(moved))
-        for key in POINT_KEYS:
-            kind, value = doc.xref_get_key(xref, key)
-            if kind == "array":
-                numbers = _numbers(value)
-                if len(numbers) % 2:
-                    raise OldSchoolPDFError("Uma anotação da página tem pontos inválidos.")
-                doc.xref_set_key(xref, key, _format(_transform_points(numbers, matrix)))
-        kind, value = doc.xref_get_key(xref, "InkList")
-        if kind == "array":
-            strokes = re.findall(r"\[([^\[\]]*)\]", value)
-            moved_strokes = [_format(_transform_points(_numbers(s), matrix)) for s in strokes]
-            doc.xref_set_key(xref, "InkList", "[" + " ".join(moved_strokes) + "]")
-        kind, value = doc.xref_get_key(xref, "RD")
-        if kind == "array":
-            doc.xref_set_key(xref, "RD", _format(v * scale for v in _numbers(value)))
-
-
-def _view(page: pdf.Page) -> pdf.Matrix:
+def view_matrix(page: pdf.Page) -> pdf.Matrix:
     """Do espaço do PDF para a página como ela aparece: corte e rotação aplicados."""
     crop, media = page.cropbox, page.mediabox
     # `cropbox` conta y a partir do topo da MediaBox; o PDF conta a partir de baixo.
@@ -215,7 +163,7 @@ def resize_pages(doc: pdf.Document, values: dict) -> tuple[int, dict]:
         if not 0.02 <= scale <= 50:
             raise OldSchoolPDFError(f"A página {number + 1} tem um tamanho incompatível.")
         words = _page_words(page)
-        old_view = _view(page)
+        old_view = view_matrix(page)
         # O que estava fora do corte antigo continua escondido no papel novo.
         clip = visible * ~old_view
         clip.normalize()
@@ -227,16 +175,16 @@ def resize_pages(doc: pdf.Document, values: dict) -> tuple[int, dict]:
         offset_x = (width - visible.width * scale) / 2
         offset_y = (height - visible.height * scale) / 2
         fit = pdf.Matrix(scale, 0, 0, scale, offset_x, offset_y)
-        array = _format(box)
+        array = pdf_array(box)
         for key in ("MediaBox", "CropBox"):
             doc.xref_set_key(page.xref, key, array)
         for key in ("TrimBox", "BleedBox", "ArtBox"):
             if doc.xref_get_key(page.xref, key)[0] != "null":
                 doc.xref_set_key(page.xref, key, array)
         page = doc[number]
-        matrix = old_view * fit * ~_view(page)
+        matrix = old_view * fit * ~view_matrix(page)
         _wrap_contents(doc, page, matrix, clip)
-        _transform_annotations(doc, page, matrix)
+        transform_annotations(doc, page, matrix)
         page = doc[number]
         if abs(page.rect.width - width) > 1 or abs(page.rect.height - height) > 1:
             raise OldSchoolPDFError("O novo tamanho da página não pôde ser confirmado.")
@@ -255,15 +203,23 @@ def _number(value: float) -> str:
     return f"{value:.6f}".rstrip("0").rstrip(".") or "0"
 
 
-def _wrap_contents(doc: pdf.Document, page: pdf.Page, matrix: pdf.Matrix, clip: pdf.Rect) -> None:
-    """Desenha o conteúdo antigo dentro de uma transformação, num fluxo só desta página."""
-    streams = [doc.xref_stream(xref) or b"" for xref in page.get_contents()]
-    transform = " ".join(_number(value) for value in matrix)
-    area = " ".join(_number(value) for value in (clip.x0, clip.y0, clip.width, clip.height))
-    head = f"q {transform} cm {area} re W n\n".encode()
-    data = head + b"\n".join(streams) + b"\nQ\n"
-    # Um fluxo novo evita mudar outras páginas que compartilhem o conteúdo antigo.
+def _new_stream(doc: pdf.Document, data: bytes) -> int:
     xref = doc.get_new_xref()
     doc.update_object(xref, "<<>>")
     doc.update_stream(xref, data, compress=True)
-    doc.xref_set_key(page.xref, "Contents", f"{xref} 0 R")
+    return xref
+
+
+def _wrap_contents(doc: pdf.Document, page: pdf.Page, matrix: pdf.Matrix, clip: pdf.Rect) -> None:
+    """Desenha o conteúdo antigo dentro de uma transformação.
+
+    Dois fluxos novos, um antes e um depois, envolvem os fluxos antigos sem alterá-los:
+    páginas que compartilham o conteúdo antigo continuam iguais, e cabeçalhos ou marcas
+    d'água do programa, que são fluxos próprios, continuam removíveis.
+    """
+    transform = " ".join(_number(value) for value in matrix)
+    area = " ".join(_number(value) for value in (clip.x0, clip.y0, clip.width, clip.height))
+    head = _new_stream(doc, f"q {transform} cm {area} re W n\n".encode())
+    tail = _new_stream(doc, b"\nQ\n")
+    streams = [head, *page.get_contents(), tail]
+    doc.xref_set_key(page.xref, "Contents", "[" + " ".join(f"{x} 0 R" for x in streams) + "]")

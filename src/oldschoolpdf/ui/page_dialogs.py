@@ -28,14 +28,14 @@ from oldschoolpdf.domain.editing import (
 from oldschoolpdf.domain.errors import OldSchoolPDFError
 
 
-def _note(text: str) -> QLabel:
+def note_label(text: str) -> QLabel:
     label = QLabel(text)
     label.setWordWrap(True)
     label.setProperty("role", "muted")
     return label
 
 
-class _PagesDialog(QDialog):
+class PagesDialog(QDialog):
     """Base com o campo de páginas, a prévia da seleção e os botões."""
 
     def __init__(self, title: str, action: str, page: int, count: int, default: str, parent):
@@ -123,7 +123,7 @@ class BlankPageDialog(QDialog):
         form.addRow("Orientação:", self.orientation)
         layout.addLayout(form)
         layout.addWidget(
-            _note(
+            note_label(
                 "As páginas entram na cópia de trabalho e podem ser desfeitas com Ctrl+Z. "
                 "Para escrever nelas, use Inserir caixa de texto."
             )
@@ -150,7 +150,7 @@ class BlankPageDialog(QDialog):
         }
 
 
-class CropDialog(_PagesDialog):
+class CropDialog(PagesDialog):
     def __init__(self, page: int, count: int, parent) -> None:
         super().__init__("Cortar margens das páginas", "Cortar", page, count, str(page + 1), parent)
         self.setObjectName("crop_dialog")
@@ -188,7 +188,7 @@ class CropDialog(_PagesDialog):
         self.sides = sides
         self.layout_root.addWidget(group)
         self.layout_root.addWidget(
-            _note(
+            note_label(
                 "O corte esconde a área de fora, mas ela continua dentro do arquivo. "
                 "Para apagar informação de verdade, use a redação, na aba Segurança."
             )
@@ -219,7 +219,7 @@ class CropDialog(_PagesDialog):
         return {"ranges": self.ranges, "mode": "margins", "margins": margins}
 
 
-class ResizeDialog(_PagesDialog):
+class ResizeDialog(PagesDialog):
     def __init__(self, page: int, count: int, parent) -> None:
         super().__init__(
             "Mudar o tamanho do papel", "Redimensionar", page, count, f"1-{count}", parent
@@ -233,7 +233,7 @@ class ResizeDialog(_PagesDialog):
         self.orientation.addItem("Paisagem", "landscape")
         self.form.addRow("Orientação:", self.orientation)
         self.layout_root.addWidget(
-            _note(
+            note_label(
                 "O conteúdo é reduzido ou ampliado na mesma proporção e centralizado no papel "
                 "novo. Texto, links, anotações e campos acompanham e continuam editáveis."
             )

@@ -21,6 +21,7 @@ EDITOR_SHORTCUTS = {
     "redact": "Ctrl+Alt+R",
     "print": "Ctrl+P",
     "edit_text": "Ctrl+E",
+    "find_replace": "Ctrl+H",
 }
 
 DEFAULT_SHORTCUTS = {

@@ -190,7 +190,7 @@ marcadores, nomes de campos. Três módulos novos de infraestrutura rodam no pro
 
 - `pdf_pages.py`: `insert_blank`, `crop_pages` e `resize_pages`. O corte converte o retângulo
   visível (com rotação) para o sistema da CropBox. O redimensionamento calcula a matriz do
-  espaço do PDF para a página visível antes e depois (`_view`: CropBox e rotação), desenha o
+  espaço do PDF para a página visível antes e depois (`view_matrix`: CropBox e rotação), desenha o
   conteúdo antigo num fluxo novo com `cm` e um recorte na área que era visível, e leva as
   coordenadas das anotações (`Rect`, `QuadPoints`, `InkList`, `Vertices`, `L`, `CL`, `RD`) pela
   mesma matriz. As palavras da página são conferidas antes e depois.
@@ -229,3 +229,41 @@ página gêmea e confere o texto lido de volta, porque o MuPDF pode descartar li
 dizendo que coube. `_renders_exactly` troca para a fonte padrão quando a fonte instalada não
 devolve as mesmas letras. A prévia aceita `view` para mostrar as páginas de continuação.
 
+## Numeração, marca d'água, substituir e desenho (0.10)
+
+`domain/stamps.py` guarda as regras sem PyMuPDF: posições, formatos de numeração, campos
+`[página]`, `[total]`, `[data]` e `[arquivo]`, fontes, cores e limites.
+
+`pdf_stamps.py` grava cabeçalho, rodapé e marca d'água. Cada marca é desenhada numa página
+auxiliar do tamanho da página visível e entra como Form XObject chamado por um fluxo de
+conteúdo só dela. `show_pdf_page` cuida dos recursos da página; a matriz é refeita com
+`view_matrix` (CropBox e rotação), porque o posicionamento do PyMuPDF erra em páginas giradas
+com CropBox deslocada. O dicionário `/PieceInfo/OldSchoolPDF` da página lista os fluxos do
+programa, o que permite trocar e remover a marca depois de gravar e reabrir.
+
+O texto do cabeçalho é escrito com `TextWriter` e uma fonte embutida (cerca de 1 KB por página).
+A marca d'água de texto passa por SVG com texto em contorno e volta como PDF só com desenhos,
+então não aparece na extração de texto. A opacidade fica num `ExtGState` dentro do XObject.
+Depois de aplicar, uma prévia pequena da página confere se a marca ficou visível.
+
+A edição do texto original usa redação, que junta os fluxos e refaz os recursos da página.
+`replace_blocks` tira os fluxos do programa antes (`detach`) e os devolve depois (`reattach`),
+recolocando os XObjects nos recursos. `read_blocks` marca como não editável o texto que só
+existe por causa desses fluxos (`stamp_areas`). O alargamento de blocos ignora desenhos
+semitransparentes, e a conversão para Word tira as marcas d'água do documento em memória.
+`_wrap_contents`, no redimensionamento, passou a envolver os fluxos antigos com dois fluxos
+novos, sem copiá-los, para que as marcas continuem removíveis.
+
+`pdf_replace.py` faz Localizar e substituir sobre os blocos de `read_blocks`: `find_text` lista
+as ocorrências com contexto; `replace_matches` monta o texto novo de cada bloco (`splice`
+mantém o estilo do trecho onde a ocorrência começa) e chama `replace_blocks`. Se um bloco
+falha, a cópia de trabalho ficou pela metade: `PdfEngine._replace_matches` recomeça numa cópia
+nova, primeiro refazendo a página bloco a bloco e depois sem o bloco que falhou
+(`ReplaceState`), e devolve no relatório o que ficou de fora.
+
+As anotações novas ficam em `pdf_editing.py`: texto riscado, desenho à mão (`InkList`), linha e
+seta (`L` com ponta fechada). Mover linhas e desenhos desloca os pontos com
+`transform_annotation`, a mesma rotina usada no redimensionamento. Na interface, `PdfCanvas` tem
+um modo de traço com prévia ao vivo, e `PdfTab` mostra a barra de cor e espessura; a janela
+compartilha a escolha entre as abas. `ui/stamp_tools.py` liga os comandos aos diálogos de
+`ui/stamp_dialogs.py`.

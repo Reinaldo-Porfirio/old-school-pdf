@@ -33,6 +33,7 @@ def main() -> None:
         "objects": engine.objects,
         "outline": engine.outline,
         "suggest_outline": engine.suggest_outline,
+        "find_text": engine.find_text,
         "edit": engine.edit,
         "step": engine.step,
         "verify_signatures": engine.verify_signatures,

@@ -15,6 +15,7 @@ from oldschoolpdf.infrastructure.media_output import MAX_MEDIA_FILES
 from oldschoolpdf.infrastructure.pdf_docx import pdf_to_docx
 from oldschoolpdf.infrastructure.pdf_editing import indices, select_pages
 from oldschoolpdf.infrastructure.pdf_ocr import MAX_MEDIA_PIXELS, raster, searchable_pdf
+from oldschoolpdf.infrastructure.pdf_stamps import strip_watermarks
 from oldschoolpdf.infrastructure.pdf_storage import (
     MAX_PAGES,
     ensure_signature_ack,
@@ -219,6 +220,8 @@ def _process_pdf(
         if operation == MediaOperation.TEXT:
             return _text(document, pages, stage, progress)
         if operation == MediaOperation.DOCX:
+            # A marca d'água do programa é desenho; no Word ela só atrapalharia as tabelas.
+            strip_watermarks(document)
             return pdf_to_docx(document, pages, stage / "documento.docx", progress)
         return _extract_images(document, pages, stage, progress)
 

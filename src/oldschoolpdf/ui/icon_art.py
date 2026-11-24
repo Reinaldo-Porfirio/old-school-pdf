@@ -260,6 +260,54 @@ ART: dict[str, str] = {
         '<path d="M4.5 12h8M4.5 14.5h8M4.5 17h5" stroke="#fff" stroke-width="1.2"/>'
         '<path d="M17 11h3M17 14h3M17 17h3" stroke="#99aabb"/>'
     ),
+    "strikeout": (
+        '<path d="M5 19 10 5h2l5 14h-2.6l-1.3-4H8.9l-1.3 4zM9.7 12.6h4.6L12 6.6z" '
+        'fill="url(#gB)" stroke="#123f7a" stroke-linejoin="round"/>'
+        '<path d="M2 11.5h20" stroke="#d0201a" stroke-width="2.4" stroke-linecap="round"/>'
+    ),
+    "pen": (
+        '<path d="M3 21c3-1 5-4 8-3s4 2 6 0" fill="none" stroke="#1957b8" stroke-width="1.8" '
+        'stroke-linecap="round"/>'
+        '<path d="M14 3l5 5-9 9-6 1 1-6z" fill="url(#gY)" stroke="#8a6a00" '
+        'stroke-linejoin="round"/>'
+        '<path d="M5 12l5 5" stroke="#8a6a00"/><path d="M4 18l1-6 5 5z" fill="#f4d9a8"/>'
+        '<path d="M4 18l1.2-2.2 1 1z" fill="#333"/>'
+        '<path d="M14 3l5 5 1.5-1.5a1.6 1.6 0 0 0 0-2.3l-2.7-2.7a1.6 1.6 0 0 0-2.3 0z" '
+        'fill="url(#gR)" stroke="#7a1a10"/>'
+    ),
+    "line": (
+        '<path d="M4 20 20 4" stroke="#123f7a" stroke-width="4" stroke-linecap="round"/>'
+        '<path d="M4 20 20 4" stroke="#4c9cf0" stroke-width="2" stroke-linecap="round"/>'
+        '<circle cx="4" cy="20" r="2" fill="url(#gY)" stroke="#8a6a00"/>'
+        '<circle cx="20" cy="4" r="2" fill="url(#gY)" stroke="#8a6a00"/>'
+    ),
+    "arrow": (
+        '<path d="M3 21 15.5 8.5" stroke="#7a1a10" stroke-width="4" stroke-linecap="round"/>'
+        '<path d="M3 21 15.5 8.5" stroke="#e8483a" stroke-width="2" stroke-linecap="round"/>'
+        '<path d="M21 3l-2.5 10-7.5-7.5z" fill="url(#gR)" stroke="#7a1a10" '
+        'stroke-linejoin="round"/>'
+    ),
+    "header_footer": _page(4, 2, 16, 20)
+    + '<rect x="6" y="4" width="9" height="2.6" fill="url(#gB)" stroke="#123f7a" '
+    'stroke-width=".6"/>'
+    '<path d="M7 9h10M7 11h10M7 13h8" stroke="#c0c8d2"/>'
+    '<rect x="8.5" y="16" width="7" height="4.4" rx="1" fill="url(#gO)" stroke="#8a3d06"/>'
+    '<path d="M11.2 17.2h1.4v2.2" stroke="#fff" stroke-width="1.1" fill="none"/>',
+    "watermark": _page(4, 2, 16, 20) + '<path d="M7 9h10M7 12h10M7 15h8" stroke="#c0c8d2"/>'
+    '<path d="M6.5 19 17.5 6" stroke="#e8483a" stroke-opacity=".55" stroke-width="3.6" '
+    'stroke-linecap="round"/>'
+    '<path d="M6.5 19 17.5 6" stroke="#fff" stroke-opacity=".7" stroke-width="1" '
+    'stroke-dasharray="1.6 1.4"/>',
+    "find_replace": (
+        '<circle cx="8.5" cy="8.5" r="5.5" fill="url(#gGlass)" stroke="#2a3a4a" stroke-width="1.8"/>'
+        '<path d="M12.5 12.5l3 3" stroke="#8a5a1a" stroke-width="3" stroke-linecap="round"/>'
+        '<path d="M14 18.5h6.5l-2.2-2.2M20.5 21.5H14l2.2 2.2" fill="none" stroke="#2f8a16" '
+        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
+    ),
+    "remove_stamps": _page(4, 2, 16, 20) + '<path d="M7 9h10M7 12h8" stroke="#c0c8d2"/>'
+    '<path d="M7.5 17.5 13 11" stroke="#e8483a" stroke-opacity=".5" stroke-width="3"/>'
+    '<circle cx="17" cy="17" r="5.5" fill="url(#gR)" stroke="#7a1a10"/>'
+    '<path d="M14.6 14.6l4.8 4.8M19.4 14.6l-4.8 4.8" stroke="#fff" stroke-width="1.8"/>',
 }
 
 # Nomes de comandos que reaproveitam um desenho existente.
@@ -280,6 +328,7 @@ ALIASES = {
     "add_field": "field",
     "remove_field": "remove",
     "to_word": "word",
+    "ink": "pen",
 }
 
 LOGO = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">

@@ -62,9 +62,14 @@ escolher uma diretamente.
 ## Anotar e preencher
 
 - Abra **Editar > Anotações** ou **Propriedades e ferramentas > Edição**.
-  Arraste sobre texto para destacar ou sublinhar. Clique para inserir um
+  Arraste sobre texto para destacar, sublinhar ou riscar. Clique para inserir um
   comentário. Caixas de texto, carimbos, formas e imagens usam uma área arrastada.
   **Esc** encerra a ferramenta de posicionamento.
+- **Caneta**, **Inserir linha** e **Inserir seta** desenham com o mouse. A barra sobre a página
+  escolhe a cor (azul, vermelho, preto, verde ou amarelo marca-texto) e a espessura, que valem
+  também para retângulos e elipses. Com a caneta, faça vários traços e pressione **Enter** ou
+  **Gravar desenho**; **Apagar último traço** desfaz o anterior. Linhas, setas e desenhos podem
+  ser movidos depois, como as outras anotações.
 - Selecione a anotação na página ou na lista do painel Edição. As opções de
   mover, editar texto e excluir dependem do tipo e das permissões do objeto.
 - **Documento > Preencher formulário** permite editar campos AcroForm da página
@@ -97,6 +102,38 @@ eles na lista para ver o motivo. Páginas digitalizadas não têm texto editáve
 
 Antes de gravar, o programa confere o texto escrito, o restante da página, a cor, os links e
 as anotações. Se algo divergir, aparece uma mensagem e nada é alterado.
+
+## Localizar e substituir
+
+**Editar > Localizar e substituir** (Ctrl+H) procura uma palavra ou frase no texto do PDF, em
+todas as páginas ou só na atual, com opções para diferenciar maiúsculas e para palavras
+inteiras. A lista mostra cada ocorrência com o trecho ao redor; desmarque o que não quiser
+trocar e clique em **Substituir marcadas**. Deixe o campo do texto novo em branco para apagar.
+
+A troca usa o mesmo motor da edição de texto: mantém a fonte, usa o espaço livre ao lado e
+reduz a fonte até 85% se o texto novo for maior. O que não couber fica como estava e aparece
+num aviso com a página e o motivo. Ctrl+Z desfaz todas as trocas de uma vez.
+
+## Numeração, cabeçalho, rodapé e marca d'água
+
+**Documento > Numeração, cabeçalho e rodapé** escreve textos no topo e no pé das páginas, à
+esquerda, no centro ou à direita. Marque **Numerar as páginas** e escolha o formato (Página 1
+de 10, 1/10, - 1 - e outros) e a posição. Os botões **Número da página**, **Total de
+páginas**, **Data de hoje** e **Nome do arquivo** inserem campos que mudam em cada página.
+Para não numerar a capa, escolha as páginas 2 em diante e comece em 1. A prévia mostra o topo
+e o pé da primeira página em tamanho real. O texto entra no conteúdo da página e continua
+pesquisável. Se ele encostar em algo que já existia, o programa avisa em quais páginas.
+
+**Documento > Marca d'água** aplica um texto ou uma imagem em todas as páginas escolhidas,
+com cor, direção, tamanho automático ou fixo, opacidade e camada (atrás ou na frente do
+conteúdo). A marca de texto vira desenho vetorial: não aparece na busca, na cópia de texto nem
+na conversão para Word, e não atrapalha a edição do texto. Em páginas digitalizadas, escolha
+**Na frente do conteúdo**; o programa avisa quando a marca ficou escondida.
+
+Aplicar de novo substitui o cabeçalho ou a marca d'água anterior. **Remover cabeçalho, rodapé
+e marca d'água** tira o que o programa aplicou, mesmo depois de salvar e reabrir o PDF. O texto
+do cabeçalho aparece no editor de texto como bloco não editável, com a indicação de usar o
+comando de numeração para mudá-lo.
 
 ## Imprimir
 

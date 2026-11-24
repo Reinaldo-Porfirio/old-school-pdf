@@ -193,6 +193,8 @@ class PdfViewer(QObject):
     outline_suggested = Signal(object)
     outline_suggest_failed = Signal(str)
     edit_reported = Signal(str, object)
+    matches_found = Signal(object)
+    matches_failed = Signal(str)
 
     def __init__(self, path: Path, workspace: PdfWorkspace) -> None:
         super().__init__(workspace)
@@ -372,6 +374,10 @@ class PdfViewer(QObject):
 
     def suggest_outline(self) -> bool:
         return self._queue_command("suggest_outline", {}, "Procurando títulos no documento…")
+
+    def find_text(self, values: dict) -> bool:
+        """Procura o texto nos blocos editáveis para Localizar e substituir."""
+        return self._queue_command("find_text", {"values": values}, "Procurando o texto…")
 
     def _queue_command(self, operation: str, arguments: dict, label: str) -> bool:
         if self.state != "ready" or self.busy:
@@ -699,6 +705,10 @@ class PdfViewer(QObject):
                 self.changed.emit()
                 entries = tuple(OutlineEntry(**entry) for entry in reply["result"]["entries"])
                 self.outline_suggested.emit(entries)
+            elif operation == "find_text":
+                self.busy = ""
+                self.changed.emit()
+                self.matches_found.emit(reply["result"])
             elif operation == "text_blocks":
                 result = reply["result"]
                 blocks = tuple(block_from_dict(entry) for entry in result["blocks"])
@@ -831,6 +841,10 @@ class PdfViewer(QObject):
             self.busy = ""
             self.changed.emit()
             self.outline_suggest_failed.emit(error)
+        elif operation == "find_text":
+            self.busy = ""
+            self.changed.emit()
+            self.matches_failed.emit(error)
         elif operation == "search":
             if self.searching and token == self._search_generation:
                 self.search_notice = error

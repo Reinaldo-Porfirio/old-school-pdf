@@ -9,7 +9,12 @@ from PySide6.QtCore import QObject, Qt
 from PySide6.QtWidgets import QDialog, QFileDialog, QInputDialog, QMessageBox
 
 from oldschoolpdf.application.pdf_output import PdfOutputTask
-from oldschoolpdf.domain.editing import ANNOTATION_LABELS, STAMP_LABELS
+from oldschoolpdf.domain.editing import (
+    ANNOTATION_LABELS,
+    STAMP_LABELS,
+    STROKE_KINDS,
+    STYLED_KINDS,
+)
 from oldschoolpdf.domain.errors import OldSchoolPDFError
 from oldschoolpdf.infrastructure.local_files import (
     OutputFile,
@@ -238,7 +243,13 @@ class DocumentTools(QObject):
                     },
                 )
             return
-        values = {"kind": kind, "region": region, "view_rotation": viewer.rotation}
+        values = {"kind": kind, "view_rotation": viewer.rotation}
+        if kind in STROKE_KINDS:
+            values.update(region)
+        else:
+            values["region"] = region
+        if kind in STYLED_KINDS:
+            values.update(color=tab.pen["color"], width=tab.pen["width"])
         if kind in {"comment", "text"}:
             value, ok = QInputDialog.getMultiLineText(
                 self.window, ANNOTATION_LABELS[kind], "Texto da anotação"

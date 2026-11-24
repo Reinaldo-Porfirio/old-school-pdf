@@ -37,6 +37,7 @@ from oldschoolpdf.domain.text_editing import (
     validate_text,
 )
 from oldschoolpdf.infrastructure.pdf_editing import normalized_rect
+from oldschoolpdf.infrastructure.pdf_stamps import detach, reattach, stamp_areas
 from oldschoolpdf.infrastructure.system_fonts import FontChoice, resolve_font
 
 TEXT_FLAGS = pymupdf.TEXT_PRESERVE_WHITESPACE | pymupdf.TEXT_MEDIABOX_CLIP
@@ -298,9 +299,22 @@ def _tail(run: TextRun) -> tuple[int, bool, bool]:
     return run.style, run.bold, run.italic
 
 
+STAMP_REASON = (
+    "Cabeçalho, rodapé ou numeração do Old School PDF. Para mudar, use Documento → "
+    "Numeração, cabeçalho e rodapé."
+)
+
+
 def read_blocks(page: pymupdf.Page) -> list[dict]:
     blocks, _ = _scan(page)
-    return [asdict(block) for block in blocks]
+    result = [asdict(block) for block in blocks]
+    areas = stamp_areas(page)
+    for block in result:
+        bbox = pymupdf.Rect(block["bbox"])
+        if areas and block["editable"] and any(bbox.intersects(area) for area in areas):
+            block["editable"] = False
+            block["reason"] = STAMP_REASON
+    return result
 
 
 def _words(page: pymupdf.Page) -> list[tuple]:
@@ -504,16 +518,33 @@ def _text_lines(page: pymupdf.Page) -> list[pymupdf.Rect]:
     return boxes
 
 
+def _layout_drawings(page: pymupdf.Page) -> list[pymupdf.Rect]:
+    """Desenhos que limitam o crescimento de um bloco.
+
+    Fundos que ocupam a página inteira e desenhos semitransparentes, como marcas d'água,
+    ficam por baixo ou por cima do texto sem disputar espaço com ele.
+    """
+    areas = []
+    for drawing in page.get_drawings():
+        area = pymupdf.Rect(drawing["rect"])
+        if area.height >= page.rect.height * 0.6:
+            continue
+        opacity = min(
+            drawing.get("fill_opacity") if drawing.get("fill") is not None else 1.0,
+            drawing.get("stroke_opacity") if drawing.get("color") is not None else 1.0,
+        )
+        if opacity is not None and opacity < 1:
+            continue
+        areas.append(area)
+    return areas
+
+
 def _obstacles(page: pymupdf.Page, rect: pymupdf.Rect, edited: list[pymupdf.Rect]) -> float:
     """Até onde o bloco pode crescer para baixo sem encostar em outro conteúdo."""
     limit = page.rect.y1 - EXPAND_MARGIN
     candidates = _text_lines(page)
     candidates += [pymupdf.Rect(item["bbox"]) for item in page.get_image_info()]
-    for drawing in page.get_drawings():
-        area = pymupdf.Rect(drawing["rect"])
-        # Fundos que ocupam a página inteira não são obstáculos.
-        if area.height < page.rect.height * 0.6:
-            candidates.append(area)
+    candidates += _layout_drawings(page)
     for other in candidates:
         if any(other.intersects(region) for region in edited):
             continue
@@ -540,10 +571,7 @@ def _widen(
     right_limit = max(right_edge, page.rect.x1 - margin)
     left_limit = page.rect.x0 + max(SIDE_MARGIN, page.rect.x1 - right_limit)
     obstacles = texts + others + [pymupdf.Rect(item["bbox"]) for item in page.get_image_info()]
-    for drawing in page.get_drawings():
-        area = pymupdf.Rect(drawing["rect"])
-        if area.height < page.rect.height * 0.6:
-            obstacles.append(area)
+    obstacles += _layout_drawings(page)
     for other in obstacles:
         if other.y0 >= rect.y1 - 0.5 or other.y1 <= rect.y0 + 0.5:
             continue
@@ -670,10 +698,13 @@ def replace_blocks(doc: pymupdf.Document, number: int, edits: list, options: dic
     original_rotation = page.rotation
     # Com a página a 0°, extração, remoção e escrita usam o mesmo sistema de coordenadas.
     page.set_rotation(0)
+    # Cabeçalho e marca d'água do programa ficam fora da edição e voltam depois.
+    stamps = detach(doc, number)
     added: list[int] = []
     try:
-        return _replace(page, edits, options, added)
+        return _replace(doc[number], edits, options, added)
     finally:
+        reattach(doc, number, stamps)
         # Páginas novas invalidam o objeto `page`: a página é carregada de novo.
         for index in (number, *added):
             doc[index].set_rotation(original_rotation)

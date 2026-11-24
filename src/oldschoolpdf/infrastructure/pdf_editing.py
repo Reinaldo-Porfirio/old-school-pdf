@@ -1,6 +1,7 @@
 """Edições aplicadas a uma revisão descartável do documento."""
 
 import math
+import re
 from base64 import b64decode
 from collections.abc import Iterable
 from dataclasses import asdict
@@ -9,7 +10,17 @@ from struct import unpack
 
 import pymupdf as pdf
 
-from oldschoolpdf.domain.editing import AnnotationInfo, FormField
+from oldschoolpdf.domain.editing import (
+    MAX_STROKE_POINTS,
+    MAX_STROKES,
+    PEN_COLORS,
+    PEN_WIDTHS,
+    STROKE_KINDS,
+    TEXT_ANNOTATIONS,
+    TEXT_MARKUPS,
+    AnnotationInfo,
+    FormField,
+)
 from oldschoolpdf.domain.errors import OldSchoolPDFError
 from oldschoolpdf.domain.security import SIGNATURE_PAD_SIZE
 from oldschoolpdf.domain.viewer import PdfRect
@@ -26,7 +37,12 @@ ANNOTATION_TYPES = {
     pdf.PDF_ANNOT_STAMP: "stamp",
     pdf.PDF_ANNOT_SQUARE: "rectangle",
     pdf.PDF_ANNOT_CIRCLE: "ellipse",
+    pdf.PDF_ANNOT_STRIKE_OUT: "strikeout",
+    pdf.PDF_ANNOT_INK: "ink",
+    pdf.PDF_ANNOT_LINE: "line",
 }
+# O marca-texto amarelo fica translúcido para não esconder o que está embaixo.
+MARKER_OPACITY = 0.45
 FIELD_TYPES = {
     pdf.PDF_WIDGET_TYPE_TEXT: "text",
     pdf.PDF_WIDGET_TYPE_CHECKBOX: "checkbox",
@@ -36,6 +52,64 @@ FIELD_TYPES = {
 }
 STAMPS = (pdf.STAMP_Approved, pdf.STAMP_ForComment, pdf.STAMP_Final, pdf.STAMP_Confidential)
 LOCKED = pdf.PDF_ANNOT_IS_READ_ONLY | pdf.PDF_ANNOT_IS_LOCKED | pdf.PDF_ANNOT_IS_LOCKED_CONTENTS
+
+
+# Chaves de anotações com pares de coordenadas na página.
+POINT_KEYS = ("QuadPoints", "Vertices", "L", "CL")
+NUMBER = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+
+
+def _numbers(text: str) -> list[float]:
+    return [float(value) for value in NUMBER.findall(text)]
+
+
+def pdf_array(values) -> str:
+    return "[" + " ".join(f"{value:.4f}".rstrip("0").rstrip(".") for value in values) + "]"
+
+
+def _transform_points(values: list[float], matrix: pdf.Matrix) -> list[float]:
+    result = []
+    for x, y in zip(values[::2], values[1::2], strict=True):
+        point = pdf.Point(x, y) * matrix
+        result += [point.x, point.y]
+    return result
+
+
+def transform_annotations(doc: pdf.Document, page: pdf.Page, matrix: pdf.Matrix) -> None:
+    """Leva as anotações, links e campos para a nova posição do conteúdo."""
+    for xref, _kind, _ in page.annot_xrefs():
+        transform_annotation(doc, xref, matrix)
+
+
+def transform_annotation(doc: pdf.Document, xref: int, matrix: pdf.Matrix) -> None:
+    """Aplica `matrix` (espaço do PDF) à posição e aos pontos de uma anotação."""
+    scale = abs(matrix.a) or abs(matrix.b)
+    kind, rect = doc.xref_get_key(xref, "Rect")
+    if kind != "array":
+        return
+    corners = _numbers(rect)
+    if len(corners) != 4:
+        raise OldSchoolPDFError("Uma anotação da página tem uma posição inválida.")
+    moved = pdf.Rect(
+        pdf.Point(corners[0], corners[1]) * matrix, pdf.Point(corners[2], corners[3]) * matrix
+    )
+    moved.normalize()
+    doc.xref_set_key(xref, "Rect", pdf_array(moved))
+    for key in POINT_KEYS:
+        kind, value = doc.xref_get_key(xref, key)
+        if kind == "array":
+            numbers = _numbers(value)
+            if len(numbers) % 2:
+                raise OldSchoolPDFError("Uma anotação da página tem pontos inválidos.")
+            doc.xref_set_key(xref, key, pdf_array(_transform_points(numbers, matrix)))
+    kind, value = doc.xref_get_key(xref, "InkList")
+    if kind == "array":
+        strokes = re.findall(r"\[([^\[\]]*)\]", value)
+        moved_strokes = [pdf_array(_transform_points(_numbers(s), matrix)) for s in strokes]
+        doc.xref_set_key(xref, "InkList", "[" + " ".join(moved_strokes) + "]")
+    kind, value = doc.xref_get_key(xref, "RD")
+    if kind == "array":
+        doc.xref_set_key(xref, "RD", pdf_array(v * scale for v in _numbers(value)))
 
 
 def normalized_rect(page: pdf.Page, bounds) -> PdfRect:
@@ -133,7 +207,7 @@ def _text(value: str) -> str:
     return value
 
 
-def _image(path: Path) -> bytes:
+def read_image(path: Path) -> bytes:
     check_local(path)
     if not path.is_file() or path.suffix.casefold() not in {".png", ".jpg", ".jpeg"}:
         raise OldSchoolPDFError("Escolha um arquivo de imagem PNG ou JPEG.")
@@ -178,16 +252,95 @@ def _position(page: pdf.Page, annot: pdf.Annot, x: float, y: float) -> None:
             raise OldSchoolPDFError("O motor não conseguiu reposicionar o objeto.")
 
 
+def _pen(values: dict) -> tuple[tuple[float, float, float], float, float]:
+    """Cor, espessura e opacidade escolhidas na barra de desenho."""
+    color = values.get("color", "blue")
+    width = values.get("width", "medium")
+    if color not in PEN_COLORS or width not in PEN_WIDTHS:
+        raise OldSchoolPDFError("Escolha uma cor e uma espessura válidas.")
+    return PEN_COLORS[color][1], PEN_WIDTHS[width][1], MARKER_OPACITY if color == "yellow" else 1.0
+
+
+def _page_points(page: pdf.Page, raw, minimum: int) -> list[tuple[float, float]]:
+    """Pontos normalizados da página como aparece, levados para as coordenadas do PDF."""
+    if not isinstance(raw, list) or not minimum <= len(raw) <= MAX_STROKE_POINTS:
+        raise OldSchoolPDFError("O desenho chegou em formato inválido.")
+    width, height = page.rect.width, page.rect.height
+    points = []
+    for item in raw:
+        if (
+            not isinstance(item, list | tuple)
+            or len(item) != 2
+            or not all(
+                isinstance(v, int | float) and not isinstance(v, bool) and 0 <= v <= 1 for v in item
+            )
+        ):
+            raise OldSchoolPDFError("O desenho tem pontos fora da página.")
+        point = pdf.Point(item[0] * width, item[1] * height) * page.derotation_matrix
+        points.append((point.x, point.y))
+    return points
+
+
+def _add_stroke(page: pdf.Page, kind: str, values: dict) -> None:
+    color, width, opacity = _pen(values)
+    if kind == "ink":
+        strokes = values.get("strokes")
+        if not isinstance(strokes, list) or not 1 <= len(strokes) <= MAX_STROKES:
+            raise OldSchoolPDFError(f"Desenhe de 1 a {MAX_STROKES} traços por vez.")
+        paths = [_page_points(page, stroke, 2) for stroke in strokes]
+        if sum(len(path) for path in paths) > MAX_STROKE_POINTS:
+            raise OldSchoolPDFError("O desenho é detalhado demais. Grave em partes.")
+        annot = page.add_ink_annot(paths)
+    else:
+        start, end = _page_points(page, values.get("points"), 2)
+        if math.dist(start, end) < 3:
+            raise OldSchoolPDFError("Arraste um pouco mais para desenhar a linha.")
+        annot = page.add_line_annot(start, end)
+    if kind == "arrow":
+        # A ponta fechada da seta usa a cor de preenchimento.
+        annot.set_line_ends(pdf.PDF_ANNOT_LE_NONE, pdf.PDF_ANNOT_LE_CLOSED_ARROW)
+        annot.set_colors(stroke=color, fill=color)
+    else:
+        annot.set_colors(stroke=color)
+    annot.set_border(width=width)
+    if opacity < 1:
+        annot.set_opacity(opacity)
+    annot.update()
+
+
+def _translate(page: pdf.Page, annot: pdf.Annot, delta) -> None:
+    """Move linhas, setas e desenhos à mão deslocando os pontos, sem sair da página."""
+    bounds = annot.rect * page.rotation_matrix
+    width, height = page.rect.width, page.rect.height
+    dx = min(max(delta[0] * width, -bounds.x0), width - bounds.x1)
+    dy = min(max(delta[1] * height, -bounds.y0), height - bounds.y1)
+    turn = page.derotation_matrix
+    shift = pdf.Point(dx, dy) * turn - pdf.Point(0, 0) * turn
+    xref = annot.xref
+    # No espaço do PDF o eixo y aponta para cima.
+    transform_annotation(page.parent, xref, pdf.Matrix(1, 0, 0, 1, shift.x, -shift.y))
+    moved = page.load_annot(xref)
+    if moved is None:
+        raise OldSchoolPDFError("O motor não conseguiu reposicionar o objeto.")
+    moved.update()
+
+
 def add_annotation(page: pdf.Page, values: dict) -> None:
     kind = values["kind"]
+    if kind in STROKE_KINDS:
+        _add_stroke(page, kind, values)
+        return
     rect = page_rect(page, values["region"])
-    if kind in {"highlight", "underline"}:
+    if kind in TEXT_MARKUPS:
         regions = _line_regions(page, rect)
         if kind == "highlight":
             annot = page.add_highlight_annot(regions)
-        else:
+        elif kind == "underline":
             annot = page.add_underline_annot(regions)
             annot.set_colors(stroke=(0.13, 0.37, 0.68))
+        else:
+            annot = page.add_strikeout_annot(regions)
+            annot.set_colors(stroke=(0.82, 0.1, 0.1))
         if values.get("text"):
             annot.set_info(content=_text(values["text"]))
         annot.update()
@@ -208,8 +361,14 @@ def add_annotation(page: pdf.Page, values: dict) -> None:
         page.add_stamp_annot(rect, stamp=STAMPS[values["stamp"]])
     elif kind in {"rectangle", "ellipse"}:
         annot = page.add_rect_annot(rect) if kind == "rectangle" else page.add_circle_annot(rect)
-        annot.set_border(width=1.5)
-        annot.set_colors(stroke=(0.15, 0.38, 0.69))
+        if "color" in values:
+            color, width, opacity = _pen(values)
+        else:
+            color, width, opacity = (0.15, 0.38, 0.69), 1.5, 1.0
+        annot.set_border(width=width)
+        annot.set_colors(stroke=color)
+        if opacity < 1:
+            annot.set_opacity(opacity)
         annot.update()
     elif kind in {"image", "visual_signature"}:
         if kind == "visual_signature" and "drawing" in values:
@@ -227,7 +386,7 @@ def add_annotation(page: pdf.Page, values: dict) -> None:
             except ValueError:
                 raise OldSchoolPDFError("O desenho da assinatura está inválido.") from None
         else:
-            image = _image(Path(values["path"]))
+            image = read_image(Path(values["path"]))
         annot = page.add_stamp_annot(rect, stamp=image)
         if kind == "visual_signature":
             annot.set_info(subject=VISUAL_SIGNATURE_SUBJECT)
@@ -242,13 +401,15 @@ def annotation_info(page: pdf.Page, annot: pdf.Annot) -> AnnotationInfo | None:
     info = annot.info
     if kind == "stamp" and info.get("name") == "ImageStamp":
         kind = "visual_signature" if info.get("subject") == VISUAL_SIGNATURE_SUBJECT else "image"
+    if kind == "line" and (annot.line_ends or (0, 0))[1] != pdf.PDF_ANNOT_LE_NONE:
+        kind = "arrow"
     editable = not (annot.flags & LOCKED)
     return AnnotationInfo(
         annot.xref,
         kind,
         normalized_rect(page, annot.rect),
         (info.get("content") or "")[:TEXT_LIMIT],
-        editable and kind not in {"highlight", "underline"},
+        editable and kind not in TEXT_MARKUPS,
         editable,
     )
 
@@ -269,10 +430,13 @@ def edit_annotation(page: pdf.Page, action: str, values: dict) -> None:
         delta = values["delta"]
         if len(delta) != 2 or any(not math.isfinite(part) or abs(part) > 1 for part in delta):
             raise OldSchoolPDFError("O deslocamento da anotação é inválido.")
-        x, y = info.region[:2]
-        _position(page, annot, x + delta[0], y + delta[1])
+        if info.kind in STROKE_KINDS:
+            _translate(page, annot, delta)
+        else:
+            x, y = info.region[:2]
+            _position(page, annot, x + delta[0], y + delta[1])
     else:
-        if info.kind not in {"comment", "text", "highlight", "underline"}:
+        if info.kind not in TEXT_ANNOTATIONS:
             raise OldSchoolPDFError("Este objeto não possui texto editável.")
         annot.set_info(content=_text(values["text"]))
         annot.update()

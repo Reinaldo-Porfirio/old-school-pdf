@@ -1,5 +1,28 @@
 # Alterações
 
+## 0.10.0 · 23/11/2026
+
+Ferramentas do dia a dia.
+
+- **Numeração, cabeçalho e rodapé:** numera as páginas em vários formatos (Página 1 de 10,
+  1/10, - 1 -) e escreve textos no topo e no pé, à esquerda, no centro ou à direita, com
+  campos para número, total, data e nome do arquivo. A prévia mostra o topo e o pé em tamanho
+  real. Avisa quando o texto encosta em algo que já existia na página.
+- **Marca d'água** de texto ou de imagem, com cor, direção, opacidade e camada. A marca de
+  texto vira desenho vetorial: não entra na busca, na cópia nem na conversão para Word. Avisa
+  quando a marca fica escondida atrás de uma página digitalizada.
+- Cabeçalho, rodapé e marca d'água podem ser **trocados ou removidos** depois, mesmo com o PDF
+  gravado e reaberto, e convivem com a edição de texto e a mudança do tamanho do papel.
+- **Localizar e substituir** (Ctrl+H), direto no texto do PDF e mantendo a fonte. A lista mostra
+  cada ocorrência com o trecho ao redor para escolher o que trocar; o que não couber fica como
+  estava e aparece num aviso. Ctrl+Z desfaz tudo de uma vez.
+- **Caneta** para desenhar à mão, **linha**, **seta** e **texto riscado**, com cor (inclusive
+  amarelo marca-texto) e espessura, que também valem para retângulos e elipses. Linhas e
+  desenhos podem ser movidos.
+- O texto do cabeçalho aparece no editor de texto como bloco não editável, com a indicação do
+  comando certo para mudá-lo.
+- Na edição de texto, desenhos semitransparentes não impedem mais o bloco de alargar.
+
 ## 0.9.1 · 17/11/2026
 
 Correções na edição do texto original, achadas com PDFs reais gerados pelo Word e pelo Edge.

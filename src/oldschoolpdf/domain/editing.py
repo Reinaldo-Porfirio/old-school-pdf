@@ -12,7 +12,7 @@ BOX_EDITS = {"crop_pages", "resize_pages"}
 OUTLINE_EDITS = {"set_outline"}
 FIELD_EDITS = {"add_field", "remove_field"}
 ANNOTATION_EDITS = {"add_annotation", "move_annotation", "remove_annotation", "change_annotation"}
-TEXT_EDITS = {"replace_text"}
+TEXT_EDITS = {"replace_text", "replace_matches"}
 
 MM = 72 / 25.4
 # Largura e altura em pontos, na orientação retrato.
@@ -92,8 +92,29 @@ ANNOTATION_LABELS = {
     "ellipse": "Elipse",
     "image": "Imagem",
     "visual_signature": "Assinatura visual",
+    "strikeout": "Texto riscado",
+    "ink": "Desenho à mão",
+    "line": "Linha",
+    "arrow": "Seta",
 }
 STAMP_LABELS = ("Aprovado", "Em análise", "Revisado", "Confidencial")
+# Marcações presas ao texto: acompanham as palavras e não podem ser movidas.
+TEXT_MARKUPS = {"highlight", "underline", "strikeout"}
+# Objetos com texto próprio que o usuário pode editar.
+TEXT_ANNOTATIONS = {"comment", "text", *TEXT_MARKUPS}
+# Ferramentas desenhadas arrastando o mouse, com cor e espessura.
+STROKE_KINDS = {"ink", "line", "arrow"}
+STYLED_KINDS = {*STROKE_KINDS, "rectangle", "ellipse"}
+PEN_COLORS = {
+    "blue": ("Azul", (0.1, 0.3, 0.75)),
+    "red": ("Vermelho", (0.85, 0.1, 0.1)),
+    "black": ("Preto", (0.0, 0.0, 0.0)),
+    "green": ("Verde", (0.1, 0.55, 0.2)),
+    "yellow": ("Amarelo marca-texto", (1.0, 0.82, 0.0)),
+}
+PEN_WIDTHS = {"thin": ("Fina", 1.0), "medium": ("Média", 2.0), "thick": ("Grossa", 4.0)}
+MAX_STROKES = 60
+MAX_STROKE_POINTS = 4000
 
 
 def parse_intervals(text: str, count: int) -> list[tuple[int, int]]:

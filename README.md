@@ -19,8 +19,8 @@ completos. Nada de minimalismo.
 
 | Arquivo | Para quem |
 |---|---|
-| [**OldSchoolPDF-0.9.1-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.9.1/OldSchoolPDF-0.9.1-setup.exe) (≈ 45 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
-| [**OldSchoolPDF-0.9.1-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.9.1/OldSchoolPDF-0.9.1-sem-instalar.zip) (≈ 59 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
+| [**OldSchoolPDF-0.10.0-setup.exe**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.10.0/OldSchoolPDF-0.10.0-setup.exe) (≈ 45 MB) | **Recomendado.** Instalador com atalhos e desinstalação. Não pede administrador. |
+| [**OldSchoolPDF-0.10.0-sem-instalar.zip**](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/download/v0.10.0/OldSchoolPDF-0.10.0-sem-instalar.zip) (≈ 59 MB) | Para quem não quer instalar: extraia em qualquer pasta e abra `OldSchoolPDF.exe`. |
 
 **Requisitos:** Windows 10 ou 11 de 64 bits e cerca de 140 MB livres em disco. Não precisa
 de Python, de conta nem de internet. Foi testado no Windows 11. O Windows 10 é aceito,
@@ -30,7 +30,7 @@ mas ainda não foi testado.
 > código, então o SmartScreen avisa na primeira vez. Clique em **Mais informações >
 > Executar assim mesmo**. Para conferir se o arquivo é o original, compare o
 > SHA-256 com o publicado na [página da versão](https://github.com/Reinaldo-Porfirio/old-school-pdf/releases/latest)
-> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.9.1-setup.exe`).
+> (no PowerShell: `Get-FileHash .\OldSchoolPDF-0.10.0-setup.exe`).
 
 ## O que ele faz
 
@@ -39,7 +39,12 @@ mas ainda não foi testado.
   inserir páginas em branco, cortar margens e mudar o tamanho do papel (A4, A5, Carta, Ofício).
 - **Marcadores:** índice clicável no painel lateral e editor de sumário, com sugestão automática
   pelos títulos do texto.
-- **Anotar:** destaque, sublinhado, comentários, caixas de texto, carimbos, formas e imagens.
+- **Anotar e desenhar:** destaque, sublinhado, texto riscado, comentários, caixas de texto,
+  carimbos, formas, imagens, caneta para desenhar à mão, linhas e setas, com cor e espessura.
+- **Numerar e marcar:** numeração de páginas (Página 1 de 10), cabeçalho e rodapé com data e
+  nome do arquivo, e marca d'água de texto ou imagem, removíveis depois.
+- **Localizar e substituir:** troca uma palavra ou frase no documento inteiro, direto no texto
+  do PDF, mantendo a fonte.
 - **Editar o texto original:** troca o texto de parágrafos, títulos e valores direto no PDF,
   com prévia lado a lado, negrito e itálico, a mesma fonte do documento quando ela estiver
   instalada no Windows e verificação automática do resultado ([como funciona](#editar-o-texto-do-pdf)).
@@ -136,8 +141,18 @@ sozinho, para diagnóstico.
   painel lateral mostra os marcadores; clique em um para ir à página.
 - **Documento > Criar campo de formulário**: arraste o retângulo na página e escolha texto,
   texto de várias linhas, caixa de marcar ou lista suspensa.
+- **Documento > Numeração, cabeçalho e rodapé** numera as páginas e escreve textos no topo e
+  no pé, com campos para número, total, data e nome do arquivo e prévia em tamanho real.
+  **Documento > Marca d'água** aplica CONFIDENCIAL, CÓPIA, RASCUNHO (ou o seu texto) ou um
+  logotipo, transparente, atrás ou na frente do conteúdo. A marca de texto vira desenho e não
+  entra na busca, na cópia nem no Word. Os dois podem ser trocados ou removidos depois, mesmo
+  com o arquivo salvo e reaberto.
+- **Editar > Localizar e substituir** (`Ctrl+H`) lista cada ocorrência com o trecho ao redor;
+  desmarque o que não quiser e troque o resto de uma vez. O que não couber fica como estava e
+  aparece num aviso.
 - Em **Editar > Anotações** ou no painel **Edição**, escolha a ferramenta e
-  indique a área na página. Selecione uma anotação para mover, editar o texto
+  indique a área na página. A **caneta**, a **linha** e a **seta** desenham com o mouse, com a
+  cor e a espessura escolhidas na barra que aparece sobre a página. Selecione uma anotação para mover, editar o texto
   ou excluí-la conforme o tipo. O comando **Preencher formulário** lista os
   campos da página atual.
 - **Ctrl+P** imprime com o diálogo do Windows: intervalo, página atual, cópias e ordem.

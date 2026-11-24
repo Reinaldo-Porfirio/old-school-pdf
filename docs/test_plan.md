@@ -96,6 +96,25 @@ digitalizadores, editando um bloco de cada tipo e conferindo a prévia.
 Verificação manual recomendada: converter para Word PDFs reais gerados pelo Word, LibreOffice,
 navegadores e digitalizadores com OCR, e abrir o resultado no Word e no LibreOffice.
 
+## Numeração, marca d'água, substituir e desenho (0.10)
+
+| Caso | Verificação |
+|---|---|
+| Cabeçalho e rodapé em páginas giradas 0°, 90°, 180°, 270°, com e sem CropBox deslocada | Posição como a página aparece, texto horizontal, campos trocados por página |
+| Reaplicar, gravar, reabrir e remover o cabeçalho | Sem texto duplicado; remoção só nas páginas pedidas |
+| Texto encostado em conteúdo, longo demais, textos que se encostam, caractere fora da fonte | Aviso ou recusa explicada |
+| Marca d'água de texto vetorial, translúcida e centralizada | Texto extraído igual ao de antes |
+| Marca atrás de página digitalizada, mistura de páginas, imagem como marca | Aviso, recusa quando some em todas, tamanho da imagem |
+| Editar texto e redimensionar com cabeçalho e marca | Edição funciona, marcas continuam removíveis |
+| Texto do cabeçalho no editor de texto | Bloco não editável com a indicação do comando certo |
+| Localizar com maiúsculas e palavras inteiras; substituir com falha parcial e desfazer | Relatório com o que ficou de fora |
+| PDF restrito recusa numeração, marca, remoção, localizar e substituir | Erro de permissão |
+| Caneta, linha, seta e texto riscado em página normal e girada; mover e limite da página | `tests/integration/test_stamps_engine.py` |
+| Interface: diálogos, prévia, campos, desenho com o mouse, Enter e Esc | `tests/gui/test_stamps_window.py` |
+
+Verificação manual recomendada: numerar e aplicar marca d'água em PDFs reais do Word, de
+navegadores e digitalizados; conferir a impressão e a abertura em outros leitores de PDF.
+
 ## Regressão do M0
 
 - Inicialização: QApplication real, QMainWindow, nove menus, três barras, três
